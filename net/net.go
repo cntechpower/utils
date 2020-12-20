@@ -14,7 +14,6 @@ func genErrInvalidPort(port string) error {
 	return fmt.Errorf("PORT FORMAT INVALID: %v", port)
 }
 
-
 func GetAddrByIpPort(ip string, port int) (*net.TCPAddr, error) {
 	if i := net.ParseIP(ip); i == nil || i.String() != ip {
 		return nil, genErrInvalidIp(ip)
@@ -44,4 +43,33 @@ func ListenTcp(addr string) (*net.TCPListener, error) {
 		return nil, err
 	}
 	return ln, err
+}
+
+func GetLocalIps() (localIps []*net.IPNet, err error) {
+	localIps = make([]*net.IPNet, 0)
+	addrS, err := net.InterfaceAddrs()
+	if err != nil {
+		return
+	}
+	for _, addr := range addrS {
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				localIps = append(localIps, ipNet)
+			}
+		}
+	}
+	return
+}
+
+func GetFirstLocalIp() (ip string, err error) {
+	addrS, err := GetLocalIps()
+	if err != nil {
+		return
+	}
+	if len(addrS) < 1 {
+		err = fmt.Errorf("can't find local ip")
+		return
+	}
+	ip = addrS[0].IP.String()
+	return
 }
