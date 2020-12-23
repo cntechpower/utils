@@ -79,6 +79,7 @@ type consulResolver struct {
 	cc                   resolver.ClientConn
 	disableServiceConfig bool
 	lastIndex            uint64
+	lastAddresses        map[string]struct{}
 }
 
 // ResolveNow invoke an immediate resolution of the target that this consulResolver watches.
@@ -93,6 +94,14 @@ func (r *consulResolver) ResolveNow(resolver.ResolveNowOptions) {
 func (r *consulResolver) Close() {
 	r.cancel()
 	r.wg.Wait()
+}
+
+func getAddressesByMap(m map[string]struct{}) []string {
+	addrS := make([]string, len(m))
+	for addr := range m {
+		addrS = append(addrS, addr)
+	}
+	return addrS
 }
 
 func (r *consulResolver) watcher() {
@@ -114,11 +123,21 @@ func (r *consulResolver) watcher() {
 			ServiceConfig: nil,
 			Attributes:    nil,
 		}
+		addresses := make(map[string]struct{}, len(services))
+		changed := false
 		for _, service := range services {
 			addr := fmt.Sprintf("%v:%v", service.Service.Address, service.Service.Port)
-			r.h.Infof("discovering service: %v address: %v", service.Service.Service, addr)
+			if _, ok := r.lastAddresses[addr]; !ok {
+				r.h.Infof("discovering new service: %v address: %v", service.Service.Service, addr)
+				changed = true
+			}
+			addresses[addr] = struct{}{}
 			newState.Addresses = append(newState.Addresses, resolver.Address{Addr: addr})
 		}
+		if changed || len(addresses) != len(r.lastAddresses) {
+			r.h.Infof("service changed, old: %v, new: %v", getAddressesByMap(r.lastAddresses), getAddressesByMap(addresses))
+		}
+		r.lastAddresses = addresses
 		r.cc.UpdateState(newState)
 		t := time.NewTimer(r.refreshInterval)
 		select {
