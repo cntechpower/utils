@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/cntechpower/utils/consul"
 	"github.com/cntechpower/utils/log"
 
 	"github.com/hashicorp/consul/api"
@@ -14,25 +15,13 @@ import (
 
 const kvPrefix = "config-center"
 
-var consulClient *api.Client
-
 type IConf interface {
 	GetAppName() string
 	GetConfKey() string
 }
 
-func Init(consulAddr string) {
-	var err error
-	consulConfig := api.DefaultConfig()
-	consulConfig.Address = consulAddr
-	consulClient, err = api.NewClient(consulConfig)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func Get(c IConf) (err error) {
-	kv, _, err := consulClient.KV().Get(path.Join(kvPrefix, c.GetAppName(), c.GetConfKey()), nil)
+	kv, _, err := consul.Client.KV().Get(path.Join(kvPrefix, c.GetAppName(), c.GetConfKey()), nil)
 	if err != nil {
 		return err
 	}
@@ -45,7 +34,7 @@ func Save(c IConf) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = consulClient.KV().Put(&api.KVPair{
+	_, err = consul.Client.KV().Put(&api.KVPair{
 		Key:   path.Join(kvPrefix, c.GetAppName(), c.GetConfKey()),
 		Value: content,
 	}, nil)
@@ -55,7 +44,7 @@ func Save(c IConf) (err error) {
 var lastIndex uint64
 
 func GetAndWatch(c IConf, interval time.Duration, onChange func(c interface{}) error) (err error) {
-	kv, meta, err := consulClient.KV().Get(path.Join(kvPrefix, c.GetAppName(), c.GetConfKey()), nil)
+	kv, meta, err := consul.Client.KV().Get(path.Join(kvPrefix, c.GetAppName(), c.GetConfKey()), nil)
 	if err != nil {
 		return err
 	}
@@ -63,7 +52,7 @@ func GetAndWatch(c IConf, interval time.Duration, onChange func(c interface{}) e
 	h := log.NewHeader(fmt.Sprintf("GetAndWatch-%v-%v", c.GetAppName(), c.GetConfKey()))
 	go func() {
 		for range time.NewTicker(interval).C {
-			kv, meta, err := consulClient.KV().Get(path.Join(kvPrefix, c.GetAppName(), c.GetConfKey()), nil)
+			kv, meta, err := consul.Client.KV().Get(path.Join(kvPrefix, c.GetAppName(), c.GetConfKey()), nil)
 			if err != nil {
 				h.Errorf("get consul kv error: %v", err)
 			}

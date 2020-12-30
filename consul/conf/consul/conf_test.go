@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/consul/api"
+
+	"github.com/cntechpower/utils/consul"
 	"github.com/cntechpower/utils/log"
 
 	"github.com/stretchr/testify/assert"
@@ -31,7 +34,9 @@ func Test_Conf(t *testing.T) {
 	}
 
 	log.InitLogger("")
-	Init("10.0.0.2:8500")
+	c := api.DefaultConfig()
+	c.Address = "10.0.0.2:8500"
+	consul.Init(c)
 	assert.Equal(t, nil, Save(c1))
 	c2 := &testConf{}
 	assert.Equal(t, nil, Get(c2))
