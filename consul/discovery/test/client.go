@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	consul "github.com/cntechpower/utils/discovery/consul/resolver"
+	consulResolver "github.com/cntechpower/utils/consul/discovery/resolver"
 	"github.com/cntechpower/utils/log"
 
 	"google.golang.org/grpc/resolver"
@@ -19,8 +19,8 @@ import (
 func main() {
 	log.InitLogger("")
 	h := log.NewHeader("resolver_test_client")
-	resolver.Register(consul.NewBuilder("10.0.0.2:8500", time.Second*5))
-	resolver.SetDefaultScheme(consul.NAME)
+	resolver.Register(consulResolver.NewBuilder("10.0.0.2:8500", time.Second*5))
+	resolver.SetDefaultScheme(consulResolver.NAME)
 	// Connect to the "userinfo" Consul service.
 	_, err := grpc.DialContext(context.Background(), "consul:///TestService", grpc.WithInsecure(), grpc.WithBalancerName(roundrobin.Name))
 	if err != nil {

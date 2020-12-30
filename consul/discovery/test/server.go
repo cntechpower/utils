@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strconv"
-	"time"
 
+	"github.com/cntechpower/utils/consul"
+	grpcRegister "github.com/cntechpower/utils/consul/discovery/register/grpc"
 	uos "github.com/cntechpower/utils/os"
 
 	"google.golang.org/grpc/health"
@@ -32,6 +32,10 @@ func main() {
 	flag.Parse()
 	log.InitLogger("")
 	h := log.NewHeader(app)
+	consulConfig := api.DefaultConfig()
+	consulConfig.Address = "10.0.0.2:8500"
+	consul.Init(consulConfig)
+
 	server := grpc.NewServer()
 	grpc_health_v1.RegisterHealthServer(server, health.NewServer())
 	localIp, err := unet.GetFirstLocalIp()
@@ -39,27 +43,7 @@ func main() {
 		h.Fatalf("get ip error: %v", err)
 	}
 
-	reg := &api.AgentServiceRegistration{
-		ID:      fmt.Sprintf("%v-%v:%v", app, localIp, strconv.Itoa(port)),
-		Name:    app,
-		Port:    port,
-		Address: localIp,
-		Check: &api.AgentServiceCheck{
-			CheckID:                        fmt.Sprintf("health-%v-%v:%v", app, localIp, strconv.Itoa(port)),
-			Name:                           app,
-			Interval:                       (time.Duration(5) * time.Second).String(),
-			Timeout:                        (time.Duration(2) * time.Second).String(),
-			GRPC:                           fmt.Sprintf("%v:%v", localIp, port),
-			DeregisterCriticalServiceAfter: (time.Duration(10) * time.Second).String(),
-		},
-	}
-	consulConfig := api.DefaultConfig()
-	consulConfig.Address = "10.0.0.2:8500"
-	consulClient, err := api.NewClient(consulConfig)
-	if err != nil {
-		h.Fatalf("get consul client error: %v", err)
-	}
-	if err := consulClient.Agent().ServiceRegister(reg); err != nil {
+	if err := grpcRegister.Register(app, localIp, port); err != nil {
 		panic(err)
 	}
 
