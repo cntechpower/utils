@@ -1,4 +1,4 @@
-package consul
+package conf
 
 import (
 	"encoding/json"
