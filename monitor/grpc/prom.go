@@ -73,10 +73,10 @@ var (
 	serverGrpcDurationTimeHist = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace:   "",
 		Subsystem:   "",
-		Name:        "server_grpc_request_duration_ms",
+		Name:        "server_grpc_request_duration_us",
 		Help:        "",
 		ConstLabels: nil,
-		Buckets:     []float64{1, 10, 20, 50, 100},
+		Buckets:     []float64{10, 20, 50, 100, 1000},
 	})
 )
 
