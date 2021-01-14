@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	cc, err := grpc.Dial("127.0.0.1:2233", grpc.WithInsecure(), grpc.WithUnaryInterceptor(mgrpc.GetUnaryClientInterceptor()))
+	cc, err := grpc.Dial("127.0.0.1:2233", grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(mgrpc.GetUnaryClientInterceptor(mgrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}))))
 	if err != nil {
 		panic(err)
 	}

@@ -43,9 +43,45 @@ func init() {
 	)
 }
 
-func GinMiddleware() gin.HandlerFunc {
+type GinMiddlewareOption interface {
+	apply(*ginMiddlewareOptions)
+}
+
+type ginMiddlewareOptions struct {
+	skipMonitorPaths map[string]struct{}
+}
+
+// funcMiddlewareOption wraps a function that modifies ginMiddlewareOptions into an
+// implementation of the GinMiddlewareOption interface.
+type funcMiddlewareOption struct {
+	f func(*ginMiddlewareOptions)
+}
+
+func (fdo *funcMiddlewareOption) apply(do *ginMiddlewareOptions) {
+	fdo.f(do)
+}
+
+func newFuncServerOption(f func(*ginMiddlewareOptions)) *funcMiddlewareOption {
+	return &funcMiddlewareOption{
+		f: f,
+	}
+}
+
+func WithBlackList(l []string) GinMiddlewareOption {
+	return newFuncServerOption(func(options *ginMiddlewareOptions) {
+		for _, p := range l {
+			options.skipMonitorPaths[p] = struct{}{}
+		}
+	})
+}
+
+func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
+	o := &ginMiddlewareOptions{skipMonitorPaths: map[string]struct{}{}}
+	for _, f := range opts {
+		f.apply(o)
+	}
 	return func(ctx *gin.Context) {
-		if ctx.Request.URL.Path == "/metrics" {
+		if _, ok := o.skipMonitorPaths[ctx.Request.URL.Path]; ok {
 			ctx.Next()
 			return
 		}

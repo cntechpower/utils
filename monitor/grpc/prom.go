@@ -95,33 +95,79 @@ func init() {
 	)
 }
 
-func GetUnaryClientInterceptor() grpc.UnaryClientInterceptor {
+type InterceptorOption interface {
+	apply(*interceptorOptions)
+}
+
+type interceptorOptions struct {
+	skipMonitorPaths map[string]struct{}
+}
+
+// funcInterceptorOption wraps a function that modifies interceptorOptions into an
+// implementation of the InterceptorOption interface.
+type funcInterceptorOption struct {
+	f func(*interceptorOptions)
+}
+
+func (fdo *funcInterceptorOption) apply(do *interceptorOptions) {
+	fdo.f(do)
+}
+
+func newFuncServerOption(f func(*interceptorOptions)) *funcInterceptorOption {
+	return &funcInterceptorOption{
+		f: f,
+	}
+}
+
+func WithBlackList(l []string) InterceptorOption {
+	return newFuncServerOption(func(options *interceptorOptions) {
+		for _, p := range l {
+			options.skipMonitorPaths[p] = struct{}{}
+		}
+	})
+}
+
+func GetUnaryClientInterceptor(opts ...InterceptorOption) grpc.UnaryClientInterceptor {
+	o := &interceptorOptions{skipMonitorPaths: map[string]struct{}{}}
+	for _, f := range opts {
+		f.apply(o)
+	}
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) (err error) {
+		_, monitorEnable := o.skipMonitorPaths[method]
 		labels := []string{cc.Target(), method}
 		start := time.Now()
 		err = invoker(ctx, method, req, reply, cc, opts...)
 		ts := float64(time.Now().Sub(start).Microseconds())
-		clientGrpcDurationTimeHist.Observe(ts)
-		clientGrpcDurationTime.WithLabelValues(labels...).Set(ts)
-		clientGrpcQueriesTotal.WithLabelValues(labels...).Inc()
-		if err != nil {
-			clientGrpcErrorsTotal.WithLabelValues(labels...).Inc()
+		if monitorEnable {
+			clientGrpcDurationTimeHist.Observe(ts)
+			clientGrpcDurationTime.WithLabelValues(labels...).Set(ts)
+			clientGrpcQueriesTotal.WithLabelValues(labels...).Inc()
+			if err != nil {
+				clientGrpcErrorsTotal.WithLabelValues(labels...).Inc()
+			}
 		}
 		return err
 	}
 }
 
-func GetUnaryServerInterceptor() grpc.UnaryServerInterceptor {
+func GetUnaryServerInterceptor(opts ...InterceptorOption) grpc.UnaryServerInterceptor {
+	o := &interceptorOptions{skipMonitorPaths: map[string]struct{}{}}
+	for _, f := range opts {
+		f.apply(o)
+	}
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		_, monitorEnable := o.skipMonitorPaths[info.FullMethod]
 		labels := []string{info.FullMethod}
 		start := time.Now()
 		resp, err = handler(ctx, req)
 		ts := float64(time.Now().Sub(start).Microseconds())
-		serverGrpcDurationTimeHist.Observe(ts)
-		serverGrpcDurationTime.WithLabelValues(labels...).Set(ts)
-		serverGrpcQueriesTotal.WithLabelValues(labels...).Inc()
-		if err != nil {
-			serverGrpcErrorsTotal.WithLabelValues(labels...).Inc()
+		if monitorEnable {
+			serverGrpcDurationTimeHist.Observe(ts)
+			serverGrpcDurationTime.WithLabelValues(labels...).Set(ts)
+			serverGrpcQueriesTotal.WithLabelValues(labels...).Inc()
+			if err != nil {
+				serverGrpcErrorsTotal.WithLabelValues(labels...).Inc()
+			}
 		}
 		return
 	}

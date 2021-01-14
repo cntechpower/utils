@@ -7,8 +7,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/cntechpower/utils/log"
-	mgrpc "github.com/cntechpower/utils/monitor/grpc"
-	mhttp "github.com/cntechpower/utils/monitor/http"
+	mGrpc "github.com/cntechpower/utils/monitor/grpc"
+	mHttp "github.com/cntechpower/utils/monitor/http"
 	unet "github.com/cntechpower/utils/net"
 	uos "github.com/cntechpower/utils/os"
 	"github.com/gin-gonic/gin"
@@ -31,7 +31,7 @@ func init() {
 }
 
 func StartGrpc(addr string) chan error {
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(mgrpc.GetUnaryServerInterceptor()))
+	server := grpc.NewServer(grpc.ChainUnaryInterceptor(mGrpc.GetUnaryServerInterceptor(mGrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}))))
 	grpcExitChan := make(chan error, 1)
 	h := log.NewHeader("grpc")
 	grpc_health_v1.RegisterHealthServer(server, health.NewServer())
@@ -52,7 +52,7 @@ func StartHttp(addr string) chan error {
 	httpExitChan := make(chan error, 1)
 	h.Infof("starting http serve at %v...", addr)
 	r := gin.New()
-	r.Use(gin.Recovery(), mhttp.GinMiddleware())
+	r.Use(gin.Recovery(), mHttp.GinMiddleware(mHttp.WithBlackList([]string{"/ping", "/metrics"})))
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
