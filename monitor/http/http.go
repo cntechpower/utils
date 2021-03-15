@@ -49,6 +49,7 @@ type GinMiddlewareOption interface {
 
 type ginMiddlewareOptions struct {
 	skipMonitorPaths map[string]struct{}
+	logEnable        bool
 }
 
 // funcMiddlewareOption wraps a function that modifies ginMiddlewareOptions into an
@@ -76,7 +77,10 @@ func WithBlackList(l []string) GinMiddlewareOption {
 }
 
 func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
-	o := &ginMiddlewareOptions{skipMonitorPaths: map[string]struct{}{}}
+	o := &ginMiddlewareOptions{
+		skipMonitorPaths: map[string]struct{}{},
+		logEnable:        false,
+	}
 	for _, f := range opts {
 		f.apply(o)
 	}
@@ -91,7 +95,9 @@ func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
 
 		//doing request
 		start := time.Now()
+		o.doStartLog(ctx)
 		ctx.Next()
+		o.doEndLog(ctx)
 		ts := float64(time.Now().Sub(start).Microseconds())
 		httpDurationTime.WithLabelValues(labels...).Set(ts)
 		httpDurationTimeHist.Observe(ts)

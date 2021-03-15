@@ -33,7 +33,7 @@ func Test_Conf(t *testing.T) {
 		IpS:  []string{"a", "b"},
 	}
 
-	log.InitLogger("")
+	log.Init("")
 	c := api.DefaultConfig()
 	c.Address = "10.0.0.2:8500"
 	consul.Init(c)

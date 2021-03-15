@@ -30,7 +30,7 @@ func init() {
 
 func main() {
 	flag.Parse()
-	log.InitLogger("")
+	log.Init("")
 	h := log.NewHeader(app)
 	consulConfig := api.DefaultConfig()
 	consulConfig.Address = "10.0.0.2:8500"

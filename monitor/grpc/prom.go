@@ -133,12 +133,12 @@ func GetUnaryClientInterceptor(opts ...InterceptorOption) grpc.UnaryClientInterc
 		f.apply(o)
 	}
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) (err error) {
-		_, monitorEnable := o.skipMonitorPaths[method]
+		_, skip := o.skipMonitorPaths[method]
 		labels := []string{cc.Target(), method}
 		start := time.Now()
 		err = invoker(ctx, method, req, reply, cc, opts...)
 		ts := float64(time.Now().Sub(start).Microseconds())
-		if monitorEnable {
+		if !skip {
 			clientGrpcDurationTimeHist.Observe(ts)
 			clientGrpcDurationTime.WithLabelValues(labels...).Set(ts)
 			clientGrpcQueriesTotal.WithLabelValues(labels...).Inc()
