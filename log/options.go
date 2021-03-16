@@ -51,3 +51,13 @@ func WithFile(typ outputType, fileName string) Option {
 		})
 	})
 }
+
+func WithEs(appId, esAddr string) Option {
+	return newLogOption(func(option *logOptions) {
+		l := newEsWriter(appId, esAddr)
+		loggers = append(loggers, &loggerWithConfig{
+			typ:    OutputTypeJson,
+			Logger: l,
+		})
+	})
+}

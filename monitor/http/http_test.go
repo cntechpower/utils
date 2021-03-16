@@ -11,7 +11,8 @@ import (
 )
 
 func TestHttp(t *testing.T) {
-	log.Init(log.WithStd(log.OutputTypeJson))
+	log.Init(log.WithStd(log.OutputTypeText),
+		log.WithEs("main.unit-test.http", "10.0.0.2:9200"))
 	s := gin.New()
 	s.Use(GinMiddleware(WithLog()))
 	s.GET("ping", func(context *gin.Context) {

@@ -3,36 +3,47 @@ package log
 import (
 	"encoding/json"
 	"os"
+	"runtime"
 
 	"github.com/cntechpower/utils/net"
 )
 
 const (
-	fieldNameHostname = "hostname"
-	fieldNameIpAddr   = "ip"
-	fieldNameTime     = "time"
-	fieldNameFileName = "file_name"
-	fieldNameFileLine = "file_line"
-	fieldNameHeader   = "sub_module"
-	fieldNameLevel    = "level"
-	fieldNameMessage  = "message"
+	fieldNameHostname    = "os.hostname"
+	fieldNameIpAddr      = "os.ip"
+	fieldNameRuntimeArch = "runtime.arch"
+	fieldNameRuntimeOs   = "runtime.os"
+	fieldNameRuntimeGo   = "runtime.go-version"
+	fieldNameTime        = "time"
+	fieldNameFileName    = "file_name"
+	fieldNameFileLine    = "file_line"
+	fieldNameHeader      = "module"
+	fieldNameLevel       = "level"
+	fieldNameMessage     = "message"
 )
 
 var defaultFields Fields
 var hostName string
 var ipAddr string
 
-var HostIpFields = Fields{
-	fieldNameHostname: hostName,
-	fieldNameIpAddr:   ipAddr,
-}
+var HostIpFields Fields
 
 func init() {
 	hostName, _ = os.Hostname()
 	ipAddr, _ = net.GetFirstLocalIp()
+	HostIpFields = Fields{
+		fieldNameHostname:    hostName,
+		fieldNameIpAddr:      ipAddr,
+		fieldNameRuntimeArch: runtime.GOARCH,
+		fieldNameRuntimeOs:   runtime.GOOS,
+		fieldNameRuntimeGo:   runtime.Version(),
+	}
 }
 
 func SetDefaultFields(fs ...Fields) {
+	if defaultFields == nil {
+		defaultFields = make(map[string]interface{}, 0)
+	}
 	for _, f := range fs {
 		for k, v := range f {
 			defaultFields[k] = v

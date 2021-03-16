@@ -30,7 +30,7 @@ func logOutputStructured(l *loggerWithConfig, file string, line int, h *Header, 
 	for k, v := range defaultFields {
 		nf[k] = v
 	}
-	nf[fieldNameTime] = time.Now().Format("2006-01-02 15:04:05.000")
+	nf[fieldNameTime] = time.Now().Format(time.RFC3339)
 	nf[fieldNameFileName] = file
 	nf[fieldNameFileLine] = line
 	nf[fieldNameHeader] = h.String()

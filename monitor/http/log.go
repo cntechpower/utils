@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	fieldNameHttpMethod   = "method"
-	fieldNameHttpPath     = "path"
-	fieldNameRequestHost  = "host"
-	fieldNameResponseCode = "code"
+	fieldNameHttpMethod   = "http.method"
+	fieldNameHttpPath     = "http.path"
+	fieldNameRequestHost  = "http.host"
+	fieldNameResponseCode = "http.code"
 )
 
 func WithLog() GinMiddlewareOption {

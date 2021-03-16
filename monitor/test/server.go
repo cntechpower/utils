@@ -68,7 +68,8 @@ func StartHttp(addr string) chan error {
 }
 
 func main() {
-	log.Init("")
+	log.Init(log.WithStd(log.OutputTypeText),
+		log.WithEs("main.unit-test.grpc", "10.0.0.2:9200"))
 	h := log.NewHeader(app)
 	grpcExitChan := StartGrpc(fmt.Sprintf(":%v", grpcPort))
 	httpExitChan := StartHttp(fmt.Sprintf(":%v", httpPort))
