@@ -60,16 +60,20 @@ func (w *esWriter) Println(v ...interface{}) {
 	var r *esResp
 	for i := 0; i < 3; i++ {
 		resp, err = w.http.Post(fmt.Sprintf("http://%v/%v/_doc", w.addr, w.appId), "application/json", strings.NewReader(s))
-		if err != nil || resp.StatusCode != http.StatusCreated {
-			fmt.Printf("esWriter Println Post fail, err: %v, resp: %v\n", err, resp)
-			continue
+		if err == nil && resp.StatusCode == http.StatusCreated {
+			err = json.NewDecoder(resp.Body).Decode(&r)
+			if err == nil && r.Result == "created" {
+				break
+			}
 		}
-		err = json.NewDecoder(resp.Body).Decode(&r)
-		if err != nil {
-			fmt.Printf("esWriter Println Decode fail, err: %v, resp: %v\n", err, resp)
-			continue
-		}
-		break
+	}
+	if err != nil {
+		fmt.Printf("esWriter Println Post fail, err: %v\n", err)
+		return
+	}
+	if resp.StatusCode != http.StatusCreated {
+		fmt.Printf("esWriter Println Post got code: %v\n", resp.StatusCode)
+		return
 	}
 	if r.Result != "created" {
 		fmt.Printf("esWriter Println Post fail, Result: %v\n", r.Result)
