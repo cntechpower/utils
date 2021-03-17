@@ -38,6 +38,7 @@ func init() {
 		fieldNameRuntimeOs:   runtime.GOOS,
 		fieldNameRuntimeGo:   runtime.Version(),
 	}
+	SetDefaultFields(HostIpFields)
 }
 
 func SetDefaultFields(fs ...Fields) {
@@ -67,15 +68,29 @@ func (f Fields) DeepCopy() Fields {
 }
 
 type Header struct {
-	name   string
-	fields Fields
+	name           string
+	fields         Fields
+	skipCallers    int
+	reportFileLine bool
 }
 
 func NewHeader(n string) *Header {
 	return &Header{
-		name:   n,
-		fields: map[string]interface{}{},
+		name:           n,
+		fields:         map[string]interface{}{},
+		skipCallers:    3,
+		reportFileLine: true,
 	}
+}
+
+func (h *Header) WithSkipCallers(n int) *Header {
+	h.skipCallers = n
+	return h
+}
+
+func (h *Header) WithReportFileLine(b bool) *Header {
+	h.reportFileLine = b
+	return h
 }
 
 func (h *Header) WithField(key string, value interface{}) *Header {
@@ -94,42 +109,42 @@ func (h *Header) String() string {
 }
 
 func (h *Header) Info(format string, a ...interface{}) {
-	logOutput(3, h, levelInfo, format, a...)
+	logOutput(h.skipCallers, h, levelInfo, format, a...)
 }
 func (h *Header) Infof(format string, a ...interface{}) {
-	logOutput(3, h, levelInfo, format, a...)
+	logOutput(h.skipCallers, h, levelInfo, format, a...)
 }
 
 func (h *Header) Errorf(format string, a ...interface{}) {
-	logOutput(3, h, levelError, format, a...)
+	logOutput(h.skipCallers, h, levelError, format, a...)
 }
 
 func (h *Header) Error(err error, format string, a ...interface{}) {
-	logOutput(3, h, levelError, "%v", err)
-	logOutput(3, h, levelError, format, a...)
+	logOutput(h.skipCallers, h, levelError, "%v", err)
+	logOutput(h.skipCallers, h, levelError, format, a...)
 }
 
 func (h *Header) Warnf(format string, a ...interface{}) {
-	logOutput(3, h, levelWarn, format, a...)
+	logOutput(h.skipCallers, h, levelWarn, format, a...)
 }
 
 func (h *Header) Fatalf(format string, a ...interface{}) {
-	logOutput(3, h, levelFatal, format, a...)
+	logOutput(h.skipCallers, h, levelFatal, format, a...)
 	panic(nil)
 }
 
 func Infof(h *Header, format string, a ...interface{}) {
-	logOutput(3, h, levelInfo, format, a...)
+	logOutput(h.skipCallers, h, levelInfo, format, a...)
 }
 
 func Errorf(h *Header, format string, a ...interface{}) {
-	logOutput(3, h, levelError, format, a...)
+	logOutput(h.skipCallers, h, levelError, format, a...)
 }
 
 func Warnf(h *Header, format string, a ...interface{}) {
-	logOutput(3, h, levelWarn, format, a...)
+	logOutput(h.skipCallers, h, levelWarn, format, a...)
 }
 
 func Fatalf(h *Header, format string, a ...interface{}) {
-	logOutput(3, h, levelError, format, a...)
+	logOutput(h.skipCallers, h, levelError, format, a...)
 }

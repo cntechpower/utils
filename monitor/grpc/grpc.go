@@ -13,7 +13,8 @@ type InterceptorOption interface {
 
 type interceptorOptions struct {
 	skipMonitorPaths map[string]struct{}
-	logEnable        bool
+	logStart         bool
+	logEnd           bool
 }
 
 // funcInterceptorOption wraps a function that modifies interceptorOptions into an
@@ -51,8 +52,8 @@ func GetUnaryClientInterceptor(opts ...InterceptorOption) grpc.UnaryClientInterc
 		start := time.Now()
 		o.doStartLog(skip, method, req)
 		err = invoker(ctx, method, req, reply, cc, opts...)
-		o.doEndLog(skip, method, reply)
 		ts := float64(time.Now().Sub(start).Microseconds())
+		o.doEndLog(skip, method, reply, ts)
 		if !skip {
 			clientGrpcDurationTimeHist.Observe(ts)
 			clientGrpcDurationTime.WithLabelValues(labels...).Set(ts)
@@ -76,8 +77,8 @@ func GetUnaryServerInterceptor(opts ...InterceptorOption) grpc.UnaryServerInterc
 		start := time.Now()
 		o.doStartLog(skip, info.FullMethod, req)
 		resp, err = handler(ctx, req)
-		o.doEndLog(skip, info.FullMethod, resp)
 		ts := float64(time.Now().Sub(start).Microseconds())
+		o.doEndLog(skip, info.FullMethod, resp, ts)
 		if !skip {
 			serverGrpcDurationTimeHist.Observe(ts)
 			serverGrpcDurationTime.WithLabelValues(labels...).Set(ts)

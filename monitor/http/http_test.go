@@ -12,9 +12,9 @@ import (
 
 func TestHttp(t *testing.T) {
 	log.Init(log.WithStd(log.OutputTypeText),
-		log.WithEs("main.unit-test.http", "10.0.0.2:9200"))
+		log.WithEs("main.unit-test.http", "http://10.0.0.2:9200"))
 	s := gin.New()
-	s.Use(GinMiddleware(WithLog()))
+	s.Use(GinMiddleware(WithLog(false, true)))
 	s.GET("ping", func(context *gin.Context) {
 		context.String(http.StatusOK, "pong")
 	})
