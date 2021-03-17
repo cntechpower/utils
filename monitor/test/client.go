@@ -14,10 +14,10 @@ import (
 
 func main() {
 	log.Init(log.WithStd(log.OutputTypeText),
-		log.WithEs("main.unit-test.grpc", "10.0.0.2:9200"))
+		log.WithEs("main.unit-test.grpc", "http://10.0.0.2:9200"))
 	cc, err := grpc.Dial("127.0.0.1:2233", grpc.WithInsecure(),
 		grpc.WithUnaryInterceptor(mgrpc.GetUnaryClientInterceptor(
-			mgrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}), mgrpc.WithLog())))
+			mgrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}), mgrpc.WithLog(false, true))))
 	if err != nil {
 		panic(err)
 	}
