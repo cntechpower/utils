@@ -1,11 +1,12 @@
 package log
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/elastic/go-elasticsearch/v8"
 )
 
 /*
@@ -30,9 +31,10 @@ type esResp struct {
 }
 
 type esWriter struct {
-	appId string
-	addr  string
-	http  http.Client
+	appId    string
+	addr     string
+	http     http.Client
+	esClient *elasticsearch.Client
 }
 
 func newEsWriter(appId, addr string) *esWriter {
@@ -43,6 +45,15 @@ func newEsWriter(appId, addr string) *esWriter {
 	w.http = http.Client{
 		Timeout: time.Second,
 	}
+	c, err := elasticsearch.NewClient(elasticsearch.Config{
+		Addresses:  []string{addr},
+		MaxRetries: 3,
+	})
+	if err != nil {
+		panic(err)
+	}
+	w.esClient = c
+
 	return w
 }
 func (w *esWriter) Println(v ...interface{}) {
@@ -59,13 +70,17 @@ func (w *esWriter) Println(v ...interface{}) {
 	var resp *http.Response
 	var r *esResp
 	for i := 0; i < 3; i++ {
-		resp, err = w.http.Post(fmt.Sprintf("http://%v/%v/_doc", w.addr, w.appId), "application/json", strings.NewReader(s))
-		if err == nil && resp.StatusCode == http.StatusCreated {
-			err = json.NewDecoder(resp.Body).Decode(&r)
-			if err == nil && r.Result == "created" {
-				break
-			}
+		resp, err := w.esClient.Index(w.appId, strings.NewReader(s), nil)
+		if err == nil && !resp.IsError() {
+			break
 		}
+		//resp, err = w.http.Post(fmt.Sprintf("http://%v/%v/_doc", w.addr, w.appId), "application/json", strings.NewReader(s))
+		//if err == nil && resp.StatusCode == http.StatusCreated {
+		//	err = json.NewDecoder(resp.Body).Decode(&r)
+		//	if err == nil && r.Result == "created" {
+		//		break
+		//	}
+		//}
 	}
 	if err != nil {
 		fmt.Printf("esWriter Println Post fail, err: %v\n", err)
