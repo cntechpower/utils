@@ -35,6 +35,15 @@ func Init(opts ...Option) {
 	}
 }
 
+func Update(opts ...Option) {
+	if loggers == nil {
+		panic("Logger not init")
+	}
+	for _, opt := range opts {
+		opt.apply(options)
+	}
+}
+
 type Level string
 
 const (
