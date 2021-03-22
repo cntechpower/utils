@@ -16,7 +16,7 @@ var (
 )
 
 // Init returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
-func Init(appName string) {
+func Init(appName, reporterAddr string) {
 	cfg := &config.Configuration{
 		ServiceName: appName,
 		Sampler: &config.SamplerConfig{
@@ -24,7 +24,8 @@ func Init(appName string) {
 			Param: 1,
 		},
 		Reporter: &config.ReporterConfig{
-			LogSpans: true,
+			LocalAgentHostPort: reporterAddr,
+			LogSpans:           true,
 		},
 	}
 	var err error
@@ -32,6 +33,7 @@ func Init(appName string) {
 	if err != nil {
 		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
 	}
+	opentracing.SetGlobalTracer(tracer)
 }
 
 func Close() {
@@ -39,11 +41,9 @@ func Close() {
 }
 
 // New trace instance with given operationName.
-func New(ctx context.Context, operationName string) opentracing.Span {
-	//tracer.Extract(operationName, opentracing.HTTPHeadersCarrier{})
-	span := tracer.StartSpan(operationName)
-	opentracing.ContextWithSpan(ctx, span)
-	return span
+func New(ctx context.Context, operationName string) (span opentracing.Span, ctxNew context.Context) {
+	span, ctxNew = opentracing.StartSpanFromContextWithTracer(ctx, tracer, operationName)
+	return
 }
 
 // SpanFromContext returns the `Span` previously associated with `ctx`, or
@@ -59,6 +59,16 @@ func TraceIdFromContext(ctx context.Context) (traceId string) {
 	if span == nil {
 		return
 	}
+	sc, ok := span.Context().(jaeger.SpanContext)
+	if ok {
+		traceId = sc.TraceID().String()
+	}
+	return
+}
+
+// TraceIdFromSpan returns the `traceId` previously associated with `span`, or
+// `""` if not found.
+func TraceIdFromSpan(span opentracing.Span) (traceId string) {
 	sc, ok := span.Context().(jaeger.SpanContext)
 	if ok {
 		traceId = sc.TraceID().String()

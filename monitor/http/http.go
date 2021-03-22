@@ -15,6 +15,7 @@ type ginMiddlewareOptions struct {
 	skipMonitorPaths map[string]struct{}
 	logStart         bool
 	logEnd           bool
+	traceEnable      bool
 }
 
 // funcMiddlewareOption wraps a function that modifies ginMiddlewareOptions into an
