@@ -57,6 +57,9 @@ func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
 			ctx.Next()
 			return
 		}
+		if o.traceEnable {
+			inject(ctx)
+		}
 		labels := []string{
 			ctx.Request.RequestURI,
 			strconv.Itoa(ctx.Writer.Status())}

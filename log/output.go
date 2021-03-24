@@ -1,12 +1,15 @@
 package log
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/cntechpower/utils/tracing"
 )
 
-func logOutput(skip int, h *Header, level Level, format string, a ...interface{}) {
+func logOutput(ctx context.Context, skip int, h *Header, level Level, format string, a ...interface{}) {
 	file := ""
 	line := 0
 	if h.reportFileLine {
@@ -15,14 +18,14 @@ func logOutput(skip int, h *Header, level Level, format string, a ...interface{}
 	for _, l := range loggers {
 		switch l.typ {
 		case OutputTypeText:
-			logOutputText(l, file, line, h, level, format, a...)
+			logOutputText(ctx, l, file, line, h, level, format, a...)
 		case OutputTypeJson:
-			logOutputStructured(l, file, line, h, level, format, a...)
+			logOutputStructured(ctx, l, file, line, h, level, format, a...)
 		}
 	}
 }
 
-func logOutputText(l *loggerWithConfig, file string, line int, h *Header, level Level, format string, a ...interface{}) {
+func logOutputText(ctx context.Context, l *loggerWithConfig, file string, line int, h *Header, level Level, format string, a ...interface{}) {
 	if h.reportFileLine {
 		l.Println(fmt.Sprintf("[%s] <%s> |%s|%s| (%s:%v) %s",
 			time.Now().Format("2006-01-02 15:04:05.000"), level, h, h.fields.String(),
@@ -35,7 +38,7 @@ func logOutputText(l *loggerWithConfig, file string, line int, h *Header, level 
 
 }
 
-func logOutputStructured(l *loggerWithConfig, file string, line int, h *Header, level Level, format string, a ...interface{}) {
+func logOutputStructured(ctx context.Context, l *loggerWithConfig, file string, line int, h *Header, level Level, format string, a ...interface{}) {
 	nf := h.fields.DeepCopy()
 	for k, v := range defaultFields {
 		nf[k] = v
@@ -48,6 +51,10 @@ func logOutputStructured(l *loggerWithConfig, file string, line int, h *Header, 
 	nf[fieldNameHeader] = h.String()
 	nf[fieldNameLevel] = level
 	nf[fieldNameMessage] = fmt.Sprintf(format, a...)
+	traceId := tracing.TraceIdFromContext(ctx)
+	if traceId != "" {
+		nf[fieldNameTracing] = traceId
+	}
 	bs, _ := json.Marshal(nf)
 	l.Println(string(bs))
 }

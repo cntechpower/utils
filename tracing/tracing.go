@@ -15,6 +15,8 @@ var (
 	tracerCloser io.Closer
 )
 
+var BackupActiveSpanKey = "BAS"
+
 // Init returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
 func Init(appName, reporterAddr string) {
 	cfg := &config.Configuration{
@@ -43,13 +45,21 @@ func Close() {
 // New trace instance with given operationName.
 func New(ctx context.Context, operationName string) (span opentracing.Span, ctxNew context.Context) {
 	span, ctxNew = opentracing.StartSpanFromContextWithTracer(ctx, tracer, operationName)
+	ctxNew = context.WithValue(ctx, BackupActiveSpanKey, span)
 	return
 }
 
 // SpanFromContext returns the `Span` previously associated with `ctx`, or
 // `nil` if no such `Span` could be found.
-func SpanFromContext(ctx context.Context) opentracing.Span {
-	return opentracing.SpanFromContext(ctx)
+func SpanFromContext(ctx context.Context) (span opentracing.Span) {
+	span = opentracing.SpanFromContext(ctx)
+	if span == nil {
+		val := ctx.Value(BackupActiveSpanKey)
+		if sp, ok := val.(opentracing.Span); ok {
+			span = sp
+		}
+	}
+	return span
 }
 
 // TraceIdFromContext returns the `traceId` previously associated with `ctx`, or
@@ -57,10 +67,12 @@ func SpanFromContext(ctx context.Context) opentracing.Span {
 func TraceIdFromContext(ctx context.Context) (traceId string) {
 	span := SpanFromContext(ctx)
 	if span == nil {
+		fmt.Println("span nil")
 		return
 	}
 	sc, ok := span.Context().(jaeger.SpanContext)
 	if ok {
+		fmt.Println("span not ok")
 		traceId = sc.TraceID().String()
 	}
 	return

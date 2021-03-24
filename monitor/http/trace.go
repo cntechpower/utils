@@ -15,13 +15,14 @@ func WithTrace() GinMiddlewareOption {
 	})
 }
 
-func t(ctx *gin.Context) {
+func inject(ctx *gin.Context) {
 	var span opentracing.Span
-	spanCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+	spanCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(ctx.Request.Header))
 	if err == nil {
 		span = opentracing.GlobalTracer().StartSpan(ctx.Request.RequestURI, ext.RPCServerOption(spanCtx))
 	} else {
 		span, _ = tracing.New(context.Background(), ctx.Request.RequestURI)
 	}
+	ctx.Set(tracing.BackupActiveSpanKey, span)
 	ctx.Header(tracing.TraceID, tracing.TraceIdFromSpan(span))
 }
