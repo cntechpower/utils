@@ -67,12 +67,10 @@ func SpanFromContext(ctx context.Context) (span opentracing.Span) {
 func TraceIdFromContext(ctx context.Context) (traceId string) {
 	span := SpanFromContext(ctx)
 	if span == nil {
-		fmt.Println("span nil")
 		return
 	}
 	sc, ok := span.Context().(jaeger.SpanContext)
 	if ok {
-		fmt.Println("span not ok")
 		traceId = sc.TraceID().String()
 	}
 	return

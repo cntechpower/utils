@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"runtime"
 
@@ -128,6 +129,11 @@ func (h *Header) Error(err error, format string, a ...interface{}) {
 
 func (h *Header) Warnf(format string, a ...interface{}) {
 	logOutput(context.Background(), h.skipCallers, h, levelWarn, format, a...)
+}
+
+func (h *Header) Fatalf(format string, a ...interface{}) {
+	logOutput(context.Background(), h.skipCallers, h, levelFatal, format, a...)
+	panic(fmt.Sprintf(format, a...))
 }
 
 func (h *Header) Infoc(ctx context.Context, format string, a ...interface{}) {

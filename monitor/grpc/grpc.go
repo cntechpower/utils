@@ -15,6 +15,7 @@ type interceptorOptions struct {
 	skipMonitorPaths map[string]struct{}
 	logStart         bool
 	logEnd           bool
+	traceEnable      bool
 }
 
 // funcInterceptorOption wraps a function that modifies interceptorOptions into an
@@ -48,12 +49,15 @@ func GetUnaryClientInterceptor(opts ...InterceptorOption) grpc.UnaryClientInterc
 	}
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) (err error) {
 		_, skip := o.skipMonitorPaths[method]
+		if !skip && o.traceEnable {
+			ctx = inject(method, ctx)
+		}
 		labels := []string{cc.Target(), method}
 		start := time.Now()
-		o.doStartLog(skip, method, req)
+		o.doStartLog(ctx, skip, method, req)
 		err = invoker(ctx, method, req, reply, cc, opts...)
 		ts := float64(time.Now().Sub(start).Microseconds())
-		o.doEndLog(skip, method, reply, ts)
+		o.doEndLog(ctx, skip, method, reply, ts)
 		if !skip {
 			clientGrpcDurationTimeHist.Observe(ts)
 			clientGrpcDurationTime.WithLabelValues(labels...).Set(ts)
@@ -73,12 +77,15 @@ func GetUnaryServerInterceptor(opts ...InterceptorOption) grpc.UnaryServerInterc
 	}
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		_, skip := o.skipMonitorPaths[info.FullMethod]
+		if !skip && o.traceEnable {
+			ctx = inject(info.FullMethod, ctx)
+		}
 		labels := []string{info.FullMethod}
 		start := time.Now()
-		o.doStartLog(skip, info.FullMethod, req)
+		o.doStartLog(ctx, skip, info.FullMethod, req)
 		resp, err = handler(ctx, req)
 		ts := float64(time.Now().Sub(start).Microseconds())
-		o.doEndLog(skip, info.FullMethod, resp, ts)
+		o.doEndLog(ctx, skip, info.FullMethod, resp, ts)
 		if !skip {
 			serverGrpcDurationTimeHist.Observe(ts)
 			serverGrpcDurationTime.WithLabelValues(labels...).Set(ts)
