@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,8 +59,9 @@ func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
 			ctx.Next()
 			return
 		}
+		var span opentracing.Span
 		if o.traceEnable {
-			inject(ctx)
+			span = inject(ctx)
 		}
 		labels := []string{
 			ctx.Request.RequestURI,
@@ -69,6 +72,9 @@ func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
 		o.doStartLog(skip, ctx)
 		ctx.Next()
 		ts := float64(time.Now().Sub(start).Microseconds())
+		if span != nil {
+			span.Finish()
+		}
 		o.doEndLog(skip, ctx, ts)
 		httpDurationTime.WithLabelValues(labels...).Set(ts)
 		httpDurationTimeHist.Observe(ts)

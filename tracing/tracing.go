@@ -29,6 +29,9 @@ func Init(appName, reporterAddr string) {
 			LocalAgentHostPort: reporterAddr,
 			LogSpans:           true,
 		},
+		Headers: &jaeger.HeadersConfig{
+			TraceContextHeaderName: "trace-id",
+		},
 	}
 	var err error
 	tracer, tracerCloser, err = cfg.NewTracer(config.Logger(jaeger.StdLogger))
@@ -65,20 +68,15 @@ func SpanFromContext(ctx context.Context) (span opentracing.Span) {
 // TraceIdFromContext returns the `traceId` previously associated with `ctx`, or
 // `""` if not found.
 func TraceIdFromContext(ctx context.Context) (traceId string) {
-	span := SpanFromContext(ctx)
-	if span == nil {
-		return
-	}
-	sc, ok := span.Context().(jaeger.SpanContext)
-	if ok {
-		traceId = sc.TraceID().String()
-	}
-	return
+	return TraceIdFromSpan(SpanFromContext(ctx))
 }
 
 // TraceIdFromSpan returns the `traceId` previously associated with `span`, or
 // `""` if not found.
 func TraceIdFromSpan(span opentracing.Span) (traceId string) {
+	if span == nil {
+		return
+	}
 	sc, ok := span.Context().(jaeger.SpanContext)
 	if ok {
 		traceId = sc.TraceID().String()

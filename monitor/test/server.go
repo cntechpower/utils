@@ -33,11 +33,13 @@ func init() {
 }
 
 func StartGrpc(addr string) chan error {
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(mGrpc.GetUnaryServerInterceptor(
-		//mGrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}),
-		mGrpc.WithLog(false, true),
-		//mGrpc.WithTrace(),
-	)))
+	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(mGrpc.GetUnaryServerInterceptor(
+			//mGrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}),
+			mGrpc.WithLog(false, true),
+			mGrpc.WithTrace(),
+		)),
+	)
 	grpcExitChan := make(chan error, 1)
 	h := log.NewHeader("grpc")
 	grpc_health_v1.RegisterHealthServer(server, health.NewServer())

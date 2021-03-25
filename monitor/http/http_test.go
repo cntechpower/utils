@@ -23,6 +23,7 @@ func TestHttp(t *testing.T) {
 		WithLog(false, true),
 		WithTrace()))
 	s.GET("ping", func(context *gin.Context) {
+		log.NewHeader("ping").Infoc(context, "hello")
 		context.String(http.StatusOK, "pong")
 	})
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 )
 
@@ -49,8 +50,9 @@ func GetUnaryClientInterceptor(opts ...InterceptorOption) grpc.UnaryClientInterc
 	}
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) (err error) {
 		_, skip := o.skipMonitorPaths[method]
+		var span opentracing.Span
 		if !skip && o.traceEnable {
-			ctx = inject(method, ctx)
+			ctx, span = clientTryInject(method, ctx)
 		}
 		labels := []string{cc.Target(), method}
 		start := time.Now()
@@ -64,6 +66,12 @@ func GetUnaryClientInterceptor(opts ...InterceptorOption) grpc.UnaryClientInterc
 			clientGrpcQueriesTotal.WithLabelValues(labels...).Inc()
 			if err != nil {
 				clientGrpcErrorsTotal.WithLabelValues(labels...).Inc()
+				if span != nil {
+					SetSpanTags(span, err, true)
+				}
+			}
+			if span != nil {
+				span.Finish()
 			}
 		}
 		return err
@@ -77,8 +85,9 @@ func GetUnaryServerInterceptor(opts ...InterceptorOption) grpc.UnaryServerInterc
 	}
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		_, skip := o.skipMonitorPaths[info.FullMethod]
+		var span opentracing.Span
 		if !skip && o.traceEnable {
-			ctx = inject(info.FullMethod, ctx)
+			ctx, span = serverTryExtract(info.FullMethod, ctx)
 		}
 		labels := []string{info.FullMethod}
 		start := time.Now()
@@ -92,6 +101,12 @@ func GetUnaryServerInterceptor(opts ...InterceptorOption) grpc.UnaryServerInterc
 			serverGrpcQueriesTotal.WithLabelValues(labels...).Inc()
 			if err != nil {
 				serverGrpcErrorsTotal.WithLabelValues(labels...).Inc()
+				if span != nil {
+					SetSpanTags(span, err, false)
+				}
+			}
+			if span != nil {
+				span.Finish()
 			}
 		}
 		return

@@ -26,12 +26,14 @@ func main() {
 			//mgrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}),
 			mgrpc.WithLog(false, true),
 			mgrpc.WithTrace(),
-		)))
+		)),
+	)
 	if err != nil {
 		panic(err)
 	}
 	for {
-		_, err := grpc_health_v1.NewHealthClient(cc).Check(context.Background(), &grpc_health_v1.HealthCheckRequest{Service: "EMPTY"})
+		_, ctx := tracing.New(context.Background(), "test")
+		_, err := grpc_health_v1.NewHealthClient(cc).Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "/grpc.health.v1.Health/Check"})
 		fmt.Println(err)
 		time.Sleep(time.Millisecond * 500)
 	}
