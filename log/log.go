@@ -28,6 +28,7 @@ type loggerWithConfig struct {
 }
 
 func (l *loggerWithConfig) run() {
+	defer wg.Done()
 	for {
 		select {
 		case s, ok := <-l.buffer:
