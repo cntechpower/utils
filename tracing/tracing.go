@@ -34,7 +34,7 @@ func Init(appName, reporterAddr string) {
 		},
 	}
 	var err error
-	tracer, tracerCloser, err = cfg.NewTracer(config.Logger(jaeger.StdLogger))
+	tracer, tracerCloser, err = cfg.NewTracer(config.Logger(jaeger.NullLogger))
 	if err != nil {
 		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
 	}
