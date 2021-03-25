@@ -1,7 +1,9 @@
 package log
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"runtime"
 
@@ -20,6 +22,7 @@ const (
 	fieldNameHeader      = "module"
 	fieldNameLevel       = "level"
 	fieldNameMessage     = "message"
+	fieldNameTracing     = "trace_id"
 )
 
 var defaultFields Fields
@@ -109,42 +112,59 @@ func (h *Header) String() string {
 }
 
 func (h *Header) Info(format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelInfo, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelInfo, format, a...)
 }
 func (h *Header) Infof(format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelInfo, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelInfo, format, a...)
 }
 
 func (h *Header) Errorf(format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelError, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelError, format, a...)
 }
 
 func (h *Header) Error(err error, format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelError, "%v", err)
-	logOutput(h.skipCallers, h, levelError, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelError, "%v", err)
+	logOutput(context.Background(), h.skipCallers, h, levelError, format, a...)
 }
 
 func (h *Header) Warnf(format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelWarn, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelWarn, format, a...)
 }
 
 func (h *Header) Fatalf(format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelFatal, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelFatal, format, a...)
+	panic(fmt.Sprintf(format, a...))
+}
+
+func (h *Header) Infoc(ctx context.Context, format string, a ...interface{}) {
+	logOutput(ctx, h.skipCallers, h, levelInfo, format, a...)
+}
+
+func (h *Header) Errorc(ctx context.Context, format string, a ...interface{}) {
+	logOutput(ctx, h.skipCallers, h, levelError, format, a...)
+}
+
+func (h *Header) Warnc(ctx context.Context, format string, a ...interface{}) {
+	logOutput(ctx, h.skipCallers, h, levelWarn, format, a...)
+}
+
+func (h *Header) Fatalc(ctx context.Context, format string, a ...interface{}) {
+	logOutput(ctx, h.skipCallers, h, levelFatal, format, a...)
 	panic(nil)
 }
 
 func Infof(h *Header, format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelInfo, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelInfo, format, a...)
 }
 
 func Errorf(h *Header, format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelError, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelError, format, a...)
 }
 
 func Warnf(h *Header, format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelWarn, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelWarn, format, a...)
 }
 
 func Fatalf(h *Header, format string, a ...interface{}) {
-	logOutput(h.skipCallers, h, levelError, format, a...)
+	logOutput(context.Background(), h.skipCallers, h, levelError, format, a...)
 }

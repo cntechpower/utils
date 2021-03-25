@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/cntechpower/utils/tracing"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/cntechpower/utils/log"
@@ -31,9 +33,13 @@ func init() {
 }
 
 func StartGrpc(addr string) chan error {
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(mGrpc.GetUnaryServerInterceptor(
-		mGrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}),
-		mGrpc.WithLog(false, true))))
+	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(mGrpc.GetUnaryServerInterceptor(
+			//mGrpc.WithBlackList([]string{"/grpc.health.v1.Health/Check"}),
+			mGrpc.WithLog(false, true),
+			mGrpc.WithTrace(),
+		)),
+	)
 	grpcExitChan := make(chan error, 1)
 	h := log.NewHeader("grpc")
 	grpc_health_v1.RegisterHealthServer(server, health.NewServer())
@@ -70,8 +76,11 @@ func StartHttp(addr string) chan error {
 }
 
 func main() {
-	log.Init(log.WithStd(log.OutputTypeText),
-		log.WithEs("main.unit-test.grpc", "http://10.0.0.2:9200"))
+	tracing.Init("unit-test-server", "")
+	log.Init(
+		log.WithStd(log.OutputTypeJson),
+		//log.WithEs("main.unit-test.grpc", "http://10.0.0.2:9200"),
+	)
 	h := log.NewHeader(app)
 	grpcExitChan := StartGrpc(fmt.Sprintf(":%v", grpcPort))
 	httpExitChan := StartHttp(fmt.Sprintf(":%v", httpPort))

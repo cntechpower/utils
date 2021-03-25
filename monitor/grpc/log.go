@@ -1,6 +1,8 @@
 package grpc
 
 import (
+	"context"
+
 	"github.com/cntechpower/utils/log"
 )
 
@@ -18,17 +20,17 @@ func WithLog(logStart, logEnd bool) InterceptorOption {
 	})
 }
 
-func (o *interceptorOptions) doStartLog(skip bool, method string, req interface{}) {
+func (o *interceptorOptions) doStartLog(ctx context.Context, skip bool, method string, req interface{}) {
 	if o.logStart == false || skip {
 		return
 	}
 	log.NewHeader("grpc-access").WithFields(log.Fields{
 		fieldNameRpcMethod: method,
 		fieldNameRpcReq:    req,
-	}).WithReportFileLine(false).Infof("request received")
+	}).WithReportFileLine(false).Infoc(ctx, "request received")
 }
 
-func (o *interceptorOptions) doEndLog(skip bool, method string, reply interface{}, ts float64) {
+func (o *interceptorOptions) doEndLog(ctx context.Context, skip bool, method string, reply interface{}, ts float64) {
 	if o.logEnd == false || skip {
 		return
 	}
@@ -36,5 +38,5 @@ func (o *interceptorOptions) doEndLog(skip bool, method string, reply interface{
 		fieldNameRpcMethod:   method,
 		fieldNameRpcReply:    reply,
 		fieldNameRpcDuration: ts,
-	}).WithReportFileLine(false).Infof("request finish")
+	}).WithReportFileLine(false).Infoc(ctx, "request finish")
 }

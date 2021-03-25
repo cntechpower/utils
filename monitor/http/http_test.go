@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/cntechpower/utils/tracing"
+
 	"github.com/cntechpower/utils/log"
 
 	"github.com/cntechpower/utils/os"
@@ -11,11 +13,17 @@ import (
 )
 
 func TestHttp(t *testing.T) {
-	log.Init(log.WithStd(log.OutputTypeText),
-		log.WithEs("main.unit-test.http", "http://10.0.0.2:9200"))
+	tracing.Init("unit-test", "")
+	log.Init(
+		log.WithStd(log.OutputTypeJson),
+		//log.WithEs("main.unit-test.http", "http://10.0.0.2:9200"),
+	)
 	s := gin.New()
-	s.Use(GinMiddleware(WithLog(false, true)))
+	s.Use(GinMiddleware(
+		WithLog(false, true),
+		WithTrace()))
 	s.GET("ping", func(context *gin.Context) {
+		log.NewHeader("ping").Infoc(context, "hello")
 		context.String(http.StatusOK, "pong")
 	})
 

@@ -30,7 +30,7 @@ func (o *ginMiddlewareOptions) doStartLog(skip bool, ctx *gin.Context) {
 		fieldNameHttpMethod:  ctx.Request.Method,
 		fieldNameHttpPath:    ctx.Request.RequestURI,
 		fieldNameRequestHost: strings.Split(ctx.Request.RemoteAddr, ":")[0],
-	}).WithReportFileLine(false).Infof("request received")
+	}).WithReportFileLine(false).Infoc(ctx, "request received")
 }
 
 func (o *ginMiddlewareOptions) doEndLog(skip bool, ctx *gin.Context, dur float64) {
@@ -43,5 +43,5 @@ func (o *ginMiddlewareOptions) doEndLog(skip bool, ctx *gin.Context, dur float64
 		fieldNameRequestHost:  strings.Split(ctx.Request.RemoteAddr, ":")[0],
 		fieldNameResponseCode: ctx.Writer.Status(),
 		fieldNameHttpDuration: dur,
-	}).WithReportFileLine(false).Infof("request finish")
+	}).WithReportFileLine(false).Infoc(ctx, "request finish")
 }
