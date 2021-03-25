@@ -3,10 +3,12 @@ package log
 import (
 	"path"
 	"runtime"
+	"sync"
 )
 
 var loggers []*loggerWithConfig
 var options *logOptions
+var wg sync.WaitGroup
 
 type Logger interface {
 	Println(v ...interface{})
@@ -20,8 +22,21 @@ const (
 )
 
 type loggerWithConfig struct {
-	typ outputType
+	typ    outputType
+	buffer chan string
 	Logger
+}
+
+func (l *loggerWithConfig) run() {
+	for {
+		select {
+		case s, ok := <-l.buffer:
+			if !ok {
+				return
+			}
+			l.Println(s)
+		}
+	}
 }
 
 func Init(opts ...Option) {
@@ -33,15 +48,14 @@ func Init(opts ...Option) {
 	for _, opt := range opts {
 		opt.apply(options)
 	}
+	wg.Add(len(loggers))
 }
 
-func Update(opts ...Option) {
-	if loggers == nil {
-		panic("Logger not init")
+func Close() {
+	for _, l := range loggers {
+		close(l.buffer)
 	}
-	for _, opt := range opts {
-		opt.apply(options)
-	}
+	wg.Wait()
 }
 
 type Level string

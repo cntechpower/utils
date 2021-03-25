@@ -13,11 +13,12 @@ import (
 )
 
 func TestHttp(t *testing.T) {
-	tracing.Init("unit-test", "")
+	tracing.Init("unit-test", "10.0.0.2:6831")
 	log.Init(
 		log.WithStd(log.OutputTypeJson),
-		//log.WithEs("main.unit-test.http", "http://10.0.0.2:9200"),
+		log.WithEs("main.unit-test.http", "http://10.0.0.2:9200"),
 	)
+	defer log.Close()
 	s := gin.New()
 	s.Use(GinMiddleware(
 		WithLog(false, true),

@@ -30,10 +30,13 @@ func WithStd(typ outputType) Option {
 	return newLogOption(func(option *logOptions) {
 		l := &_log.Logger{}
 		l.SetOutput(os.Stdout)
-		loggers = append(loggers, &loggerWithConfig{
+		lc := &loggerWithConfig{
 			typ:    typ,
+			buffer: make(chan string, 1000),
 			Logger: l,
-		})
+		}
+		loggers = append(loggers, lc)
+		go lc.run()
 	})
 }
 
@@ -45,19 +48,25 @@ func WithFile(typ outputType, fileName string) Option {
 			panic(err)
 		}
 		l.SetOutput(file)
-		loggers = append(loggers, &loggerWithConfig{
+		lc := &loggerWithConfig{
 			typ:    typ,
+			buffer: make(chan string, 1000),
 			Logger: l,
-		})
+		}
+		loggers = append(loggers, lc)
+		go lc.run()
 	})
 }
 
 func WithEs(appId, esAddr string) Option {
 	return newLogOption(func(option *logOptions) {
 		l := newEsWriter(appId, esAddr)
-		loggers = append(loggers, &loggerWithConfig{
+		lc := &loggerWithConfig{
 			typ:    OutputTypeJson,
+			buffer: make(chan string, 1000),
 			Logger: l,
-		})
+		}
+		loggers = append(loggers, lc)
+		go lc.run()
 	})
 }

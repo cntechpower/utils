@@ -63,16 +63,21 @@ func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
 		if o.traceEnable {
 			span = inject(ctx)
 		}
+
+		//before doing request
+		start := time.Now()
+		o.doStartLog(skip, ctx)
+
+		//doing request
+		ctx.Next()
+
+		//after doing request
+		ts := float64(time.Now().Sub(start).Microseconds())
 		labels := []string{
 			ctx.Request.RequestURI,
 			strconv.Itoa(ctx.Writer.Status())}
-
-		//doing request
-		start := time.Now()
-		o.doStartLog(skip, ctx)
-		ctx.Next()
-		ts := float64(time.Now().Sub(start).Microseconds())
 		if span != nil {
+			SetSpanCode(span, ctx.Writer.Status())
 			span.Finish()
 		}
 		o.doEndLog(skip, ctx, ts)
