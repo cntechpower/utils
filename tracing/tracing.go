@@ -47,7 +47,12 @@ func Close() {
 
 // New trace instance with given operationName.
 func New(ctx context.Context, operationName string) (span opentracing.Span, ctxNew context.Context) {
-	span, ctxNew = opentracing.StartSpanFromContextWithTracer(ctx, tracer, operationName)
+	parent := SpanFromContext(ctx)
+	var opts []opentracing.StartSpanOption
+	if parent != nil {
+		opts = []opentracing.StartSpanOption{opentracing.ChildOf(parent.Context())}
+	}
+	span, ctxNew = opentracing.StartSpanFromContextWithTracer(ctx, tracer, operationName, opts...)
 	ctxNew = context.WithValue(ctx, BackupActiveSpanKey, span)
 	return
 }

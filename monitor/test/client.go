@@ -15,11 +15,12 @@ import (
 )
 
 func main() {
-	tracing.Init("unit-test-client", "")
+	tracing.Init("unit-test-client", "10.0.0.2:6831")
 	log.Init(
 		log.WithStd(log.OutputTypeJson),
 		//log.WithEs("main.unit-test.grpc", "http://10.0.0.2:9200"),
 	)
+	defer log.Close()
 	cc, err := grpc.Dial("127.0.0.1:2233",
 		grpc.WithInsecure(),
 		grpc.WithUnaryInterceptor(mgrpc.GetUnaryClientInterceptor(
@@ -33,8 +34,19 @@ func main() {
 	}
 	for {
 		_, ctx := tracing.New(context.Background(), "test")
-		_, err := grpc_health_v1.NewHealthClient(cc).Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "/grpc.health.v1.Health/Check"})
-		fmt.Println(err)
+		_, _ = grpc_health_v1.NewHealthClient(cc).Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: "/grpc.health.v1.Health/Check"})
+		tracing.Do(ctx, "operation-1", func() error {
+			time.Sleep(time.Millisecond)
+			return nil
+		})
+		tracing.Do(ctx, "operation-2", func() error {
+			time.Sleep(time.Millisecond)
+			return nil
+		})
+		tracing.Do(ctx, "operation-3", func() error {
+			time.Sleep(2 * time.Millisecond)
+			return fmt.Errorf("fake error")
+		})
 		time.Sleep(time.Millisecond * 500)
 	}
 

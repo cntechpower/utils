@@ -17,7 +17,8 @@ import (
 )
 
 func main() {
-	log.Init("")
+	log.Init(log.WithStd(log.OutputTypeText))
+	defer log.Close()
 	h := log.NewHeader("resolver_test_client")
 	resolver.Register(consulResolver.NewBuilder("10.0.0.2:8500", time.Second*5))
 	resolver.SetDefaultScheme(consulResolver.NAME)

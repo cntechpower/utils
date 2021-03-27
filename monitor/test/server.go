@@ -76,7 +76,7 @@ func StartHttp(addr string) chan error {
 }
 
 func main() {
-	tracing.Init("unit-test-server", "")
+	tracing.Init("unit-test-server", "10.0.0.2:6831")
 	log.Init(
 		log.WithStd(log.OutputTypeJson),
 		//log.WithEs("main.unit-test.grpc", "http://10.0.0.2:9200"),
