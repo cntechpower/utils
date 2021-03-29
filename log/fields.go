@@ -111,6 +111,10 @@ func (h *Header) String() string {
 	return h.name
 }
 
+func (h *Header) Printf(format string, a ...interface{}) {
+	logOutput(context.Background(), h.skipCallers, h, levelInfo, format, a...)
+}
+
 func (h *Header) Info(format string, a ...interface{}) {
 	logOutput(context.Background(), h.skipCallers, h, levelInfo, format, a...)
 }
