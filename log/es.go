@@ -2,6 +2,10 @@ package log
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net"
+	"net/http"
 	"strings"
 	"time"
 
@@ -15,6 +19,17 @@ type esWriter struct {
 	esClient *elasticsearch.Client
 }
 
+var HTTPTransport = &http.Transport{
+	DialContext: (&net.Dialer{
+		Timeout:   30 * time.Second,  // 连接超时时间
+		KeepAlive: 300 * time.Second, // 保持长连接的时间
+	}).DialContext, // 设置连接的参数
+	MaxIdleConns:          100,               // 最大空闲连接
+	IdleConnTimeout:       300 * time.Second, // 空闲连接的超时时间
+	ExpectContinueTimeout: 30 * time.Second,  // 等待服务第一个响应的超时时间
+	MaxIdleConnsPerHost:   100,               // 每个host保持的空闲连接数
+}
+
 func newEsWriter(appId, addr string) *esWriter {
 	w := &esWriter{
 		appId: appId,
@@ -23,6 +38,7 @@ func newEsWriter(appId, addr string) *esWriter {
 	c, err := elasticsearch.NewClient(elasticsearch.Config{
 		Addresses:  []string{addr},
 		MaxRetries: 3,
+		Transport:  HTTPTransport,
 	})
 	if err != nil {
 		panic(err)
@@ -48,6 +64,9 @@ func (w *esWriter) Println(v ...interface{}) {
 			w.esClient.Index.WithTimeout(time.Second))
 		if err == nil && !resp.IsError() {
 			break
+		}
+		if err == nil {
+			_, _ = io.Copy(ioutil.Discard, resp.Body)
 		}
 	}
 }
