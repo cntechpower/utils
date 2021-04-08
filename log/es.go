@@ -65,9 +65,10 @@ func (w *esWriter) Println(v ...interface{}) {
 		if err == nil && !resp.IsError() {
 			break
 		}
-		if err == nil && resp.Body != nil {
-			_, _ = io.Copy(ioutil.Discard, resp.Body)
-			_ = resp.Body.Close()
-		}
+	}
+	//https://stackoverflow.com/questions/17948827/reusing-http-connections-in-golang
+	if err == nil && resp.Body != nil {
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
+		_ = resp.Body.Close()
 	}
 }
