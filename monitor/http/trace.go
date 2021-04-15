@@ -18,9 +18,9 @@ func WithTrace() GinMiddlewareOption {
 func inject(ctx *gin.Context) (span opentracing.Span) {
 	spanCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(ctx.Request.Header))
 	if err == nil {
-		span = opentracing.GlobalTracer().StartSpan(ctx.Request.RequestURI, ext.RPCServerOption(spanCtx))
+		span = opentracing.GlobalTracer().StartSpan(ctx.Request.URL.Path, ext.RPCServerOption(spanCtx))
 	} else {
-		span, _ = tracing.New(context.Background(), ctx.Request.RequestURI)
+		span, _ = tracing.New(context.Background(), ctx.Request.URL.Path)
 	}
 	ext.HTTPMethod.Set(span, ctx.Request.Method)
 	ext.HTTPUrl.Set(span, ctx.Request.URL.Path)
