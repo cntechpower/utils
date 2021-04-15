@@ -74,7 +74,7 @@ func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
 		//after doing request
 		ts := float64(time.Now().Sub(start).Microseconds())
 		labels := []string{
-			ctx.Request.RequestURI,
+			ctx.Request.URL.Path,
 			strconv.Itoa(ctx.Writer.Status())}
 		if span != nil {
 			SetSpanCode(span, ctx.Writer.Status())
