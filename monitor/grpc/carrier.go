@@ -1,7 +1,6 @@
 package grpc
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/opentracing/opentracing-go"
@@ -33,7 +32,6 @@ func (w metadataReaderWriter) Set(key, val string) {
 func (w metadataReaderWriter) ForeachKey(handler func(key, val string) error) error {
 	for k, vals := range w.MD {
 		for _, v := range vals {
-			fmt.Printf("ForeachKey: Key: %v, values: %v\n", k, v)
 			if err := handler(k, v); err != nil {
 				return err
 			}
