@@ -36,6 +36,9 @@ func logOutputText(ctx context.Context, l *loggerWithConfig, file string, line i
 			time.Now().Format("2006-01-02 15:04:05.000"), level, h, h.fields.String(),
 			fmt.Sprintf(format, a...))
 	}
+	if closing {
+		fmt.Printf("[%v] drop log because logger is closing %v\n", l.typ, s)
+	}
 	select {
 	case l.buffer <- s:
 		return
@@ -63,6 +66,9 @@ func logOutputStructured(ctx context.Context, l *loggerWithConfig, file string, 
 	}
 	bs, _ := json.Marshal(nf)
 	s := string(bs)
+	if closing {
+		fmt.Printf("[%v] drop log because logger is closing %v\n", l.typ, s)
+	}
 	select {
 	case l.buffer <- s:
 		return

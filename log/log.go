@@ -9,6 +9,7 @@ import (
 var loggers []*loggerWithConfig
 var options *logOptions
 var wg sync.WaitGroup
+var closing bool
 
 type Logger interface {
 	Println(v ...interface{})
@@ -53,6 +54,7 @@ func Init(opts ...Option) {
 }
 
 func Close() {
+	closing = true
 	for _, l := range loggers {
 		close(l.buffer)
 	}
