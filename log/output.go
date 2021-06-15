@@ -38,6 +38,7 @@ func logOutputText(ctx context.Context, l *loggerWithConfig, file string, line i
 	}
 	if closing {
 		fmt.Printf("[%v] drop log because logger is closing %v\n", l.typ, s)
+		return
 	}
 	select {
 	case l.buffer <- s:
@@ -68,6 +69,7 @@ func logOutputStructured(ctx context.Context, l *loggerWithConfig, file string, 
 	s := string(bs)
 	if closing {
 		fmt.Printf("[%v] drop log because logger is closing %v\n", l.typ, s)
+		return
 	}
 	select {
 	case l.buffer <- s:
