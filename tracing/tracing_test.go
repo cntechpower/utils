@@ -85,7 +85,7 @@ func formatString(ctx context.Context, helloTo string) string {
 		panic(err.Error())
 	}
 
-	resp, err := Do(req)
+	resp, err := DoTest(req)
 	if err != nil {
 		ext.LogError(span, err)
 		panic(err.Error())
@@ -111,13 +111,13 @@ func printHello(ctx context.Context, helloStr string) {
 	ext.HTTPMethod.Set(span, "GET")
 	span.Tracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 
-	if _, err := Do(req); err != nil {
+	if _, err := DoTest(req); err != nil {
 		ext.LogError(span, err)
 		panic(err.Error())
 	}
 }
 
-func Do(req *http.Request) ([]byte, error) {
+func DoTest(req *http.Request) ([]byte, error) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err

@@ -25,7 +25,7 @@ func logOutput(ctx context.Context, skip int, h *Header, level Level, format str
 	}
 }
 
-func logOutputText(ctx context.Context, l *loggerWithConfig, file string, line int, h *Header, level Level, format string, a ...interface{}) {
+func logOutputText(_ context.Context, l *loggerWithConfig, file string, line int, h *Header, level Level, format string, a ...interface{}) {
 	var s string
 	if h.reportFileLine {
 		s = fmt.Sprintf("[%s] <%s> |%s|%s| (%s:%v) %s",
