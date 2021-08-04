@@ -21,7 +21,7 @@ func TestHttp(t *testing.T) {
 	defer log.Close()
 	s := gin.New()
 	s.Use(GinMiddleware(
-		WithLog(false, true),
+		WithLog(true, true),
 		WithTrace(),
 	))
 	s.GET("ping", func(context *gin.Context) {

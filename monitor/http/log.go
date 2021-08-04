@@ -10,6 +10,7 @@ import (
 const (
 	fieldNameHttpMethod   = "http.method"
 	fieldNameHttpPath     = "http.path"
+	fieldNameHttpParams   = "http.params"
 	fieldNameRequestHost  = "http.host"
 	fieldNameResponseCode = "http.code"
 	fieldNameHttpDuration = "http.duration"
@@ -28,7 +29,8 @@ func (o *ginMiddlewareOptions) doStartLog(skip bool, ctx *gin.Context) {
 	}
 	log.NewHeader("http-access").WithFields(log.Fields{
 		fieldNameHttpMethod:  ctx.Request.Method,
-		fieldNameHttpPath:    ctx.Request.RequestURI,
+		fieldNameHttpPath:    ctx.Request.URL.Path,
+		fieldNameHttpParams:  strings.TrimLeft(ctx.Request.RequestURI, ctx.Request.URL.Path+"?"),
 		fieldNameRequestHost: strings.Split(ctx.Request.RemoteAddr, ":")[0],
 	}).WithReportFileLine(false).Infoc(ctx, "request received")
 }
@@ -39,7 +41,7 @@ func (o *ginMiddlewareOptions) doEndLog(skip bool, ctx *gin.Context, dur float64
 	}
 	log.NewHeader("http-access").WithFields(log.Fields{
 		fieldNameHttpMethod:   ctx.Request.Method,
-		fieldNameHttpPath:     ctx.Request.RequestURI,
+		fieldNameHttpPath:     ctx.Request.URL.Path,
 		fieldNameRequestHost:  strings.Split(ctx.Request.RemoteAddr, ":")[0],
 		fieldNameResponseCode: ctx.Writer.Status(),
 		fieldNameHttpDuration: dur,
