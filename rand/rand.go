@@ -7,15 +7,15 @@ import (
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-func RandString(n int) string {
+func String(n int) string {
 	rand.Seed(time.Now().UnixNano())
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = letterRunes[rand.Intn(len(letterRunes))] //nolint:gosec
 	}
 	return string(b)
 }
 
-func RandInt(n int) int {
-	return rand.Intn(n)
+func Int(n int) int {
+	return rand.Intn(n) //nolint:gosec
 }
