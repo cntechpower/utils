@@ -28,7 +28,7 @@ func worker(ctx context.Context, wg *sync.WaitGroup, fn func(c context.Context) 
 		if err != nil {
 			log.Printf("%v\n", err)
 		}
-		report.Add(time.Since(start))
+		report.Add(err, time.Since(start))
 	}
 }
 

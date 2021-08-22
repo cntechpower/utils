@@ -9,6 +9,7 @@ import (
 
 type LatencyReport struct { //nolint:maligned
 	totalRequestCount float64
+	totalErrorCount   float64
 	startTime         time.Time
 	stopSignal        bool
 	inited            bool
@@ -23,12 +24,15 @@ func NewLatencyReport(size int) *LatencyReport {
 	return r
 }
 
-func (r *LatencyReport) Add(d time.Duration) {
+func (r *LatencyReport) Add(err error, d time.Duration) {
 	r.totalRequestCount++
 	r.histogram.Update(d.Nanoseconds())
 	if !r.inited {
 		r.startTime = time.Now()
 		r.inited = true
+	}
+	if err != nil {
+		r.totalErrorCount++
 	}
 }
 func (r *LatencyReport) singleReport() {
@@ -43,7 +47,9 @@ func (r *LatencyReport) singleReport() {
 func (r *LatencyReport) Report() {
 	r.stopSignal = true
 	fmt.Println("-------------------------Latency Report-------------------------")
-	fmt.Printf("Total Request Count: %v\n", r.histogram.Count())
+	fmt.Printf("Total Request Count: %v\n", r.totalRequestCount)
+	fmt.Printf("Total Error Count: %v\n", r.totalErrorCount)
+	fmt.Printf("Error Rate: %.5f\n", r.totalErrorCount/r.totalRequestCount)
 	fmt.Printf("Average Request QPS: %.3f\n", r.totalRequestCount/time.Since(r.startTime).Seconds())
 	fmt.Printf("Max Request Latency: %.3fms\n", float64(r.histogram.Max())/1e6)
 	fmt.Printf("Min Request Latency: %.3fms\n", float64(r.histogram.Min())/1e6)
