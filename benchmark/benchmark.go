@@ -13,7 +13,7 @@ import (
 
 var report *LatencyReport
 
-func worker(ctx context.Context, wg *sync.WaitGroup, fn func() error) {
+func worker(ctx context.Context, wg *sync.WaitGroup, fn func(c context.Context) error) {
 	defer func() {
 		wg.Done()
 	}()
@@ -24,7 +24,7 @@ func worker(ctx context.Context, wg *sync.WaitGroup, fn func() error) {
 		default:
 		}
 		start := time.Now()
-		err := fn()
+		err := fn(ctx)
 		if err != nil {
 			log.Printf("%v\n", err)
 		}
@@ -32,7 +32,7 @@ func worker(ctx context.Context, wg *sync.WaitGroup, fn func() error) {
 	}
 }
 
-func Run(fn func() error) {
+func Run(fn func(ctx context.Context) error) {
 	workerNum := 10
 	wg := &sync.WaitGroup{}
 	report = NewLatencyReport(10240000)

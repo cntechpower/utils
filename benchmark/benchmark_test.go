@@ -1,11 +1,12 @@
 package benchmark
 
 import (
+	"context"
 	"testing"
 	"time"
 )
 
-func fakeWorker() (err error) {
+func fakeWorker(ctx context.Context) (err error) {
 	time.Sleep(time.Millisecond * 20)
 	return
 }
