@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	fieldNameHttpMethod   = "http.method"
-	fieldNameHttpPath     = "http.path"
-	fieldNameHttpParams   = "http.params"
+	fieldNameHTTPMethod   = "http.method"
+	fieldNameHTTPPath     = "http.path"
+	fieldNameHTTPParams   = "http.params"
 	fieldNameRequestHost  = "http.host"
 	fieldNameResponseCode = "http.code"
-	fieldNameHttpDuration = "http.duration"
+	fieldNameHTTPDuration = "http.duration"
 )
 
 func WithLog(logStart, logEnd bool) GinMiddlewareOption {
@@ -24,26 +24,26 @@ func WithLog(logStart, logEnd bool) GinMiddlewareOption {
 }
 
 func (o *ginMiddlewareOptions) doStartLog(skip bool, ctx *gin.Context) {
-	if o.logStart == false || skip {
+	if !o.logStart || skip {
 		return
 	}
 	log.NewHeader("http-access").WithFields(log.Fields{
-		fieldNameHttpMethod:  ctx.Request.Method,
-		fieldNameHttpPath:    ctx.Request.URL.Path,
-		fieldNameHttpParams:  strings.TrimLeft(ctx.Request.RequestURI, ctx.Request.URL.Path+"?"),
+		fieldNameHTTPMethod:  ctx.Request.Method,
+		fieldNameHTTPPath:    ctx.Request.URL.Path,
+		fieldNameHTTPParams:  strings.TrimLeft(ctx.Request.RequestURI, ctx.Request.URL.Path+"?"),
 		fieldNameRequestHost: strings.Split(ctx.Request.RemoteAddr, ":")[0],
 	}).WithReportFileLine(false).Infoc(ctx, "request received")
 }
 
 func (o *ginMiddlewareOptions) doEndLog(skip bool, ctx *gin.Context, dur float64) {
-	if o.logEnd == false || skip {
+	if !o.logEnd || skip {
 		return
 	}
 	log.NewHeader("http-access").WithFields(log.Fields{
-		fieldNameHttpMethod:   ctx.Request.Method,
-		fieldNameHttpPath:     ctx.Request.URL.Path,
+		fieldNameHTTPMethod:   ctx.Request.Method,
+		fieldNameHTTPPath:     ctx.Request.URL.Path,
 		fieldNameRequestHost:  strings.Split(ctx.Request.RemoteAddr, ":")[0],
 		fieldNameResponseCode: ctx.Writer.Status(),
-		fieldNameHttpDuration: dur,
+		fieldNameHTTPDuration: dur,
 	}).WithReportFileLine(false).Infoc(ctx, "request finish")
 }

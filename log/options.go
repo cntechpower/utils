@@ -58,9 +58,9 @@ func WithFile(typ outputType, fileName string) Option {
 	})
 }
 
-func WithEs(appId, esAddr string) Option {
+func WithEs(appID, esAddr string) Option {
 	return newLogOption(func(option *logOptions) {
-		l := newEsWriter(appId, esAddr)
+		l := newEsWriter(appID, esAddr)
 		lc := &loggerWithConfig{
 			typ:    OutputTypeJson,
 			buffer: make(chan string, 1000),

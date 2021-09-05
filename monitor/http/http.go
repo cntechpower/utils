@@ -64,15 +64,15 @@ func GinMiddleware(opts ...GinMiddlewareOption) gin.HandlerFunc {
 			span = inject(ctx)
 		}
 
-		//before doing request
+		// before doing request
 		start := time.Now()
 		o.doStartLog(skip, ctx)
 
-		//doing request
+		// doing request
 		ctx.Next()
 
-		//after doing request
-		ts := float64(time.Now().Sub(start).Microseconds())
+		// after doing request
+		ts := float64(time.Since(start).Microseconds())
 		labels := []string{
 			ctx.Request.URL.Path,
 			strconv.Itoa(ctx.Writer.Status())}
