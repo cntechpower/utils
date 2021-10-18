@@ -4,22 +4,21 @@ import (
 	"context"
 	"time"
 
-	"google.golang.org/grpc"
-
+	passive "github.com/cntechpower/utils/grpc/passive/client"
 	"github.com/cntechpower/utils/grpc/passive/testing/pb"
-
 	"github.com/cntechpower/utils/log"
+	grpcMonitor "github.com/cntechpower/utils/monitor/grpc"
+	xos "github.com/cntechpower/utils/os"
 	"github.com/cntechpower/utils/tracing"
 
-	passive "github.com/cntechpower/utils/grpc/passive/client"
-	xos "github.com/cntechpower/utils/os"
+	"google.golang.org/grpc"
 )
 
 func call(h *log.Header) {
 	for range time.Tick(time.Second) {
 		ctx, _ := context.WithTimeout(context.Background(), time.Second)
 		span, ctx := tracing.New(ctx, "call")
-		gc, err := passive.GetClientConn(ctx, "passive:///test-server", grpc.WithInsecure())
+		gc, err := passive.GetClientConn(ctx, "passive:///test-server", grpc.WithInsecure(), grpc.WithUnaryInterceptor(grpcMonitor.GetUnaryClientInterceptor(grpcMonitor.WithTrace())))
 		if err != nil {
 			h.Errorc(ctx, "passive.DialContext error: %v", err)
 			span.Finish()

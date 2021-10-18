@@ -189,12 +189,6 @@ func DialContext(ctx context.Context, target string, opts ...grpc.DialOption) (g
 	options = append(options, opts...)
 
 	gc, err = grpc.DialContext(ctx, target, options...)
-	if err == nil {
-		_, err = health.NewHealthClient(gc).Check(ctx, &health.HealthCheckRequest{})
-		if err != nil {
-			_ = gc.Close()
-		}
-	}
 
 	return
 }
