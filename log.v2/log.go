@@ -1,0 +1,63 @@
+package log_v2
+
+import (
+	"context"
+	"os"
+	"path"
+	"runtime"
+
+	"github.com/cntechpower/utils/log.v2/output"
+	"github.com/cntechpower/utils/tracing"
+
+	log "github.com/sirupsen/logrus"
+)
+
+func Init() {
+	log.SetFormatter(&log.TextFormatter{})
+	log.SetOutput(os.Stdout)
+	SetDefaultFields(HostIpFields)
+}
+
+func InitWithES(appId, addr string) {
+	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(output.NewESOutput(appId, addr))
+	SetDefaultFields(HostIpFields)
+}
+
+func getCaller(skip int) (string, int) {
+	_, file, line, ok := runtime.Caller(skip)
+	if ok {
+		return path.Base(file), line
+	}
+	return "unknown.go", 0
+}
+
+func getRuntimeFields(ctx context.Context) map[string]interface{} {
+	fields := make(map[string]interface{})
+	fields[fieldNameTraceId] = tracing.TraceIdFromContext(ctx)
+	fields[fieldNameTraceName] = tracing.OperationNameFromContext(ctx)
+	file, line := getCaller(3)
+	fields[fieldNameFileName] = file
+	fields[fieldNameFileLine] = line
+	return fields
+}
+
+func InfoC(ctx context.Context, fields log.Fields, format string, args ...interface{}) {
+	fs := getRuntimeFields(ctx)
+	defaultLogger.WithFields(fs).WithFields(fields).Infof(format, args...)
+}
+
+func WarnC(ctx context.Context, fields log.Fields, format string, args ...interface{}) {
+	fs := getRuntimeFields(ctx)
+	defaultLogger.WithFields(fs).WithFields(fields).Warnf(format, args...)
+}
+
+func ErrorC(ctx context.Context, fields log.Fields, format string, args ...interface{}) {
+	fs := getRuntimeFields(ctx)
+	defaultLogger.WithFields(fs).WithFields(fields).Errorf(format, args...)
+}
+
+func FatalC(ctx context.Context, fields log.Fields, format string, args ...interface{}) {
+	fs := getRuntimeFields(ctx)
+	defaultLogger.WithFields(fs).WithFields(fields).Fatalf(format, args...)
+}

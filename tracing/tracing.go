@@ -73,6 +73,9 @@ func SpanFromContext(ctx context.Context) (span opentracing.Span) {
 // TraceIdFromContext returns the `traceId` previously associated with `ctx`, or
 // `""` if not found.
 func TraceIdFromContext(ctx context.Context) (traceId string) {
+	if ctx == nil {
+		return
+	}
 	return TraceIdFromSpan(SpanFromContext(ctx))
 }
 
@@ -85,6 +88,28 @@ func TraceIdFromSpan(span opentracing.Span) (traceId string) {
 	sc, ok := span.Context().(jaeger.SpanContext)
 	if ok {
 		traceId = sc.TraceID().String()
+	}
+	return
+}
+
+// OperationNameFromContext returns the `operationName` previously associated with `ctx`, or
+// `""` if not found.
+func OperationNameFromContext(ctx context.Context) (traceId string) {
+	if ctx == nil {
+		return
+	}
+	return OperationNameFromSpan(SpanFromContext(ctx))
+}
+
+// OperationNameFromSpan returns the `operationName` previously associated with `span`, or
+// `""` if not found.
+func OperationNameFromSpan(span opentracing.Span) (operationName string) {
+	if span == nil {
+		return
+	}
+	s, ok := span.(*jaeger.Span)
+	if ok && s != nil {
+		operationName = s.OperationName()
 	}
 	return
 }
