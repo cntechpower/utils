@@ -9,9 +9,10 @@ import (
 
 func TestLog(t *testing.T) {
 	Init()
-	tracing.Init("test-agent","")
+	a := map[string]interface{}{"a": 123}
+	tracing.Init("test-agent", "")
 	for i := 0; i < 100; i++ {
 		_, ctx := tracing.New(context.Background(), "TestLog")
-		InfoC(ctx, nil, "hello world, %v", "dujinyang")
+		InfoC(ctx, a, "hello world, %v", "dujinyang")
 	}
 }

@@ -61,3 +61,19 @@ func FatalC(ctx context.Context, fields log.Fields, format string, args ...inter
 	fs := getRuntimeFields(ctx)
 	defaultLogger.WithFields(fs).WithFields(fields).Fatalf(format, args...)
 }
+
+func Infof(fields log.Fields, format string, args ...interface{}) {
+	defaultLogger.WithFields(fields).Infof(format, args...)
+}
+
+func Warnf(fields log.Fields, format string, args ...interface{}) {
+	defaultLogger.WithFields(fields).Warnf(format, args...)
+}
+
+func Errorf(fields log.Fields, format string, args ...interface{}) {
+	defaultLogger.WithFields(fields).Errorf(format, args...)
+}
+
+func Fatalf(fields log.Fields, format string, args ...interface{}) {
+	defaultLogger.WithFields(fields).Fatalf(format, args...)
+}
