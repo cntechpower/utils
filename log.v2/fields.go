@@ -24,7 +24,7 @@ const (
 var hostName string
 var ipAddr string
 var defaultFields log.Fields
-var HostIpFields log.Fields
+var hostIpFields log.Fields
 var defaultLogger *log.Entry
 
 func SetDefaultFields(fs ...log.Fields) {
@@ -42,12 +42,12 @@ func SetDefaultFields(fs ...log.Fields) {
 func init() {
 	hostName, _ = os.Hostname()
 	ipAddr, _ = net.GetFirstLocalIp()
-	HostIpFields = log.Fields{
+	hostIpFields = log.Fields{
 		fieldNameHostname:    hostName,
 		fieldNameIpAddr:      ipAddr,
 		fieldNameRuntimeArch: runtime.GOARCH,
 		fieldNameRuntimeOs:   runtime.GOOS,
 		fieldNameRuntimeGo:   runtime.Version(),
 	}
-	SetDefaultFields(HostIpFields)
+	SetDefaultFields(hostIpFields)
 }

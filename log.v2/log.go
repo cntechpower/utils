@@ -15,13 +15,13 @@ import (
 func Init() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
-	SetDefaultFields(HostIpFields)
+	SetDefaultFields(hostIpFields)
 }
 
 func InitWithES(appId, addr string) {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(output.NewESOutput(appId, addr))
-	SetDefaultFields(HostIpFields)
+	SetDefaultFields(hostIpFields)
 }
 
 func getCaller(skip int) (string, int) {
