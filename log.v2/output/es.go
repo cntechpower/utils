@@ -47,6 +47,8 @@ func NewESOutput(appId, addr string) *esOutput {
 	}
 	w.esClient = c
 
+	go w.do()
+
 	return w
 }
 func (w *esOutput) Write(p []byte) (n int, err error) {
