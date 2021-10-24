@@ -2,6 +2,7 @@ package output
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -15,6 +16,7 @@ import (
 type esOutput struct {
 	appId    string
 	addr     string
+	buffer   chan []byte
 	esClient *elasticsearch.Client
 }
 
@@ -31,8 +33,9 @@ var HTTPTransport = &http.Transport{
 
 func NewESOutput(appId, addr string) *esOutput {
 	w := &esOutput{
-		appId: appId,
-		addr:  addr,
+		appId:  appId,
+		addr:   addr,
+		buffer: make(chan []byte, 10000),
 	}
 	c, err := elasticsearch.NewClient(elasticsearch.Config{
 		Addresses:  []string{addr},
@@ -47,18 +50,35 @@ func NewESOutput(appId, addr string) *esOutput {
 	return w
 }
 func (w *esOutput) Write(p []byte) (n int, err error) {
+	select {
+	case w.buffer <- p:
+		return
+	case <-time.After(time.Millisecond):
+		fmt.Printf("DROP LOG: %v", string(p))
+		return
+	}
+
+}
+
+func (w *esOutput) do() {
+	var err error
 	var resp *esapi.Response
-	for i := 0; i < 3; i++ {
-		resp, err = w.esClient.Index(w.appId, bytes.NewReader(p),
-			w.esClient.Index.WithTimeout(time.Second))
-		if err == nil && !resp.IsError() {
-			break
+	for p := range w.buffer {
+		for i := 0; i < 3; i++ {
+			resp, err = w.esClient.Index(w.appId, bytes.NewReader(p),
+				w.esClient.Index.WithTimeout(time.Second))
+			if err == nil && !resp.IsError() {
+				break
+			}
 		}
+		if err != nil {
+			fmt.Printf("esOutput do error: %v", err)
+		}
+		//https://stackoverflow.com/questions/17948827/reusing-http-connections-in-golang
+		if err == nil && resp.Body != nil {
+			_, _ = io.Copy(ioutil.Discard, resp.Body)
+			_ = resp.Body.Close()
+		}
+		return
 	}
-	//https://stackoverflow.com/questions/17948827/reusing-http-connections-in-golang
-	if err == nil && resp.Body != nil {
-		_, _ = io.Copy(ioutil.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}
-	return
 }
