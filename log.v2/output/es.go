@@ -73,14 +73,17 @@ func (w *esOutput) do() {
 				break
 			}
 		}
-		if err != nil {
-			fmt.Printf("esOutput do error: %v", err)
+		if err != nil || resp.IsError() {
+			extraMsg := ""
+			if resp != nil {
+				extraMsg = resp.String()
+			}
+			fmt.Printf("esOutput do error: %v, extra: %v", err, extraMsg)
 		}
 		//https://stackoverflow.com/questions/17948827/reusing-http-connections-in-golang
 		if err == nil && resp.Body != nil {
 			_, _ = io.Copy(ioutil.Discard, resp.Body)
 			_ = resp.Body.Close()
 		}
-		return
 	}
 }
