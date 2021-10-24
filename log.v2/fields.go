@@ -17,7 +17,8 @@ const (
 	fieldNameFileName    = "file_name"
 	fieldNameFileLine    = "file_line"
 	fieldNameTraceId     = "trace_id"
-	fieldNameTraceName    = "trace_name"
+	fieldNameTraceName   = "trace_name"
+	FieldNameBizName     = "biz"
 )
 
 var hostName string
