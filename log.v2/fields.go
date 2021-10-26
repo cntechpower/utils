@@ -17,6 +17,7 @@ const (
 	fieldNameFileName    = "file_name"
 	fieldNameFileLine    = "file_line"
 	fieldNameTraceId     = "trace_id"
+	fieldNameSpanId      = "span_id"
 	fieldNameTraceName   = "trace_name"
 	FieldNameBizName     = "biz"
 )

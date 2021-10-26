@@ -3,7 +3,6 @@ package log_v2
 import (
 	"context"
 	"os"
-	"path"
 	"runtime"
 
 	"github.com/cntechpower/utils/log.v2/output"
@@ -37,14 +36,14 @@ func Close() {
 func getCaller(skip int) (string, int) {
 	_, file, line, ok := runtime.Caller(skip)
 	if ok {
-		return path.Base(file), line
+		return file, line
 	}
 	return "unknown.go", 0
 }
 
 func getRuntimeFields(ctx context.Context) map[string]interface{} {
 	fields := make(map[string]interface{})
-	fields[fieldNameTraceId] = tracing.TraceIdFromContext(ctx)
+	fields[fieldNameTraceId], fields[fieldNameSpanId] = tracing.TraceSpanIdFromContext(ctx)
 	fields[fieldNameTraceName] = tracing.OperationNameFromContext(ctx)
 	file, line := getCaller(3)
 	fields[fieldNameFileName] = file

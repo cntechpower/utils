@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
 type es struct {
@@ -54,27 +53,22 @@ func NewES(appId, addr string) (w *es, closer func()) {
 	return
 }
 func (w *es) Write(p []byte) (n int, err error) {
+	tp := make([]byte, len(p))
+	copy(tp, p)
 	select {
-	case w.buffer <- p:
-		return
+	case w.buffer <- tp:
 	case <-time.After(time.Millisecond):
 		fmt.Printf("DROP LOG: %v", string(p))
-		return
 	}
+	n = len(p)
+	return
 
 }
 
 func (w *es) do() {
-	var err error
-	var resp *esapi.Response
 	for p := range w.buffer {
-
-		resp, err = w.esClient.Index(w.appId, bytes.NewReader(p),
+		resp, err := w.esClient.Index(w.appId, bytes.NewReader(p),
 			w.esClient.Index.WithTimeout(time.Millisecond*100))
-		if err == nil && !resp.IsError() {
-			break
-		}
-
 		if err != nil || resp.IsError() {
 			extraMsg := ""
 			if resp != nil {

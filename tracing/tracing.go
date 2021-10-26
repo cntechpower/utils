@@ -23,7 +23,7 @@ func Init(appName, reporterAddr string) {
 		ServiceName: appName,
 		Sampler: &config.SamplerConfig{
 			Type:  "probabilistic",
-			Param: 0.1,
+			Param: 1,
 		},
 		Reporter: &config.ReporterConfig{
 			LocalAgentHostPort: reporterAddr,
@@ -88,6 +88,29 @@ func TraceIdFromSpan(span opentracing.Span) (traceId string) {
 	sc, ok := span.Context().(jaeger.SpanContext)
 	if ok {
 		traceId = sc.TraceID().String()
+	}
+	return
+}
+
+// TraceSpanIdFromContext returns the `traceId` and `spanId` previously associated with `ctx`, or
+// `""` if not found.
+func TraceSpanIdFromContext(ctx context.Context) (traceId, spanId string) {
+	if ctx == nil {
+		return
+	}
+	return TraceSpanIdFromSpan(SpanFromContext(ctx))
+}
+
+// TraceSpanIdFromSpan returns the `traceId` and `spanId` previously associated with `span`, or
+// `""` if not found.
+func TraceSpanIdFromSpan(span opentracing.Span) (traceId, spanId string) {
+	if span == nil {
+		return
+	}
+	sc, ok := span.Context().(jaeger.SpanContext)
+	if ok {
+		traceId = sc.TraceID().String()
+		spanId = sc.SpanID().String()
 	}
 	return
 }
