@@ -17,13 +17,13 @@ var (
 
 var BackupActiveSpanKey = "BAS"
 
-// Init returns an instance of Jaeger Tracer that samples 100% of traces and logs all spans to stdout.
+// Init returns an instance of Jaeger Tracer that samples probability% of traces and logs all spans to stdout.
 func Init(appName, reporterAddr string) {
 	cfg := &config.Configuration{
 		ServiceName: appName,
 		Sampler: &config.SamplerConfig{
-			Type:  "const",
-			Param: 1,
+			Type:  "probabilistic",
+			Param: 0.1,
 		},
 		Reporter: &config.ReporterConfig{
 			LocalAgentHostPort: reporterAddr,

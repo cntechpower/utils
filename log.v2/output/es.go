@@ -13,16 +13,17 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/esapi"
 )
 
-type esOutput struct {
-	appId    string
-	addr     string
-	buffer   chan []byte
-	esClient *elasticsearch.Client
+type es struct {
+	appId     string
+	addr      string
+	buffer    chan []byte
+	esClient  *elasticsearch.Client
+	closeChan chan struct{}
 }
 
 var HTTPTransport = &http.Transport{
 	DialContext: (&net.Dialer{
-		Timeout:   30 * time.Second,  // 连接超时时间
+		Timeout:   3 * time.Second,   // 连接超时时间
 		KeepAlive: 300 * time.Second, // 保持长连接的时间
 	}).DialContext, // 设置连接的参数
 	MaxIdleConns:          100,               // 最大空闲连接
@@ -31,11 +32,12 @@ var HTTPTransport = &http.Transport{
 	MaxIdleConnsPerHost:   100,               // 每个host保持的空闲连接数
 }
 
-func NewESOutput(appId, addr string) *esOutput {
-	w := &esOutput{
-		appId:  appId,
-		addr:   addr,
-		buffer: make(chan []byte, 10000),
+func NewES(appId, addr string) (w *es, closer func()) {
+	w = &es{
+		appId:     appId,
+		addr:      addr,
+		buffer:    make(chan []byte, 10000),
+		closeChan: make(chan struct{}, 0),
 	}
 	c, err := elasticsearch.NewClient(elasticsearch.Config{
 		Addresses:  []string{addr},
@@ -46,12 +48,12 @@ func NewESOutput(appId, addr string) *esOutput {
 		panic(err)
 	}
 	w.esClient = c
-
+	closer = w.Close
 	go w.do()
 
-	return w
+	return
 }
-func (w *esOutput) Write(p []byte) (n int, err error) {
+func (w *es) Write(p []byte) (n int, err error) {
 	select {
 	case w.buffer <- p:
 		return
@@ -62,28 +64,38 @@ func (w *esOutput) Write(p []byte) (n int, err error) {
 
 }
 
-func (w *esOutput) do() {
+func (w *es) do() {
 	var err error
 	var resp *esapi.Response
 	for p := range w.buffer {
-		for i := 0; i < 3; i++ {
-			resp, err = w.esClient.Index(w.appId, bytes.NewReader(p),
-				w.esClient.Index.WithTimeout(time.Second))
-			if err == nil && !resp.IsError() {
-				break
-			}
+
+		resp, err = w.esClient.Index(w.appId, bytes.NewReader(p),
+			w.esClient.Index.WithTimeout(time.Millisecond*100))
+		if err == nil && !resp.IsError() {
+			break
 		}
+
 		if err != nil || resp.IsError() {
 			extraMsg := ""
 			if resp != nil {
 				extraMsg = resp.String()
 			}
-			fmt.Printf("esOutput do error: %v, extra: %v", err, extraMsg)
+			fmt.Printf("es do error: %v, extra: %v\n", err, extraMsg)
 		}
 		//https://stackoverflow.com/questions/17948827/reusing-http-connections-in-golang
 		if err == nil && resp.Body != nil {
 			_, _ = io.Copy(ioutil.Discard, resp.Body)
 			_ = resp.Body.Close()
 		}
+	}
+	close(w.closeChan)
+}
+
+func (w *es) Close() {
+	close(w.buffer)
+
+	select {
+	case <-w.closeChan:
+	case <-time.After(time.Second * 5):
 	}
 }

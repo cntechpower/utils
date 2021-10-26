@@ -12,6 +12,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var closer func()
+
 func Init() {
 	log.SetFormatter(&log.TextFormatter{})
 	log.SetOutput(os.Stdout)
@@ -20,8 +22,16 @@ func Init() {
 
 func InitWithES(appId, addr string) {
 	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(output.NewESOutput(appId, addr))
+	o, c := output.NewES(appId, addr)
+	log.SetOutput(o)
+	closer = c
 	SetDefaultFields(hostIpFields)
+}
+
+func Close() {
+	if closer != nil {
+		closer()
+	}
 }
 
 func getCaller(skip int) (string, int) {
