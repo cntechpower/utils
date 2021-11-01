@@ -43,8 +43,18 @@ func getCaller(skip int) (string, int) {
 
 func getRuntimeFields(ctx context.Context) map[string]interface{} {
 	fields := make(map[string]interface{})
-	fields[fieldNameTraceId], fields[fieldNameSpanId] = tracing.TraceSpanIdFromContext(ctx)
-	fields[fieldNameTraceName] = tracing.OperationNameFromContext(ctx)
+	traceId, spanId := tracing.TraceSpanIdFromContext(ctx)
+	if traceId != "" {
+		fields[fieldNameTraceId] = traceId
+	}
+	if spanId != "" {
+		fields[fieldNameSpanId] = spanId
+	}
+	traceName := tracing.OperationNameFromContext(ctx)
+	if traceName != "" {
+		fields[fieldNameTraceName] = traceName
+	}
+
 	file, line := getCaller(3)
 	fields[fieldNameFileName] = file
 	fields[fieldNameFileLine] = line

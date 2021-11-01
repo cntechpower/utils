@@ -52,6 +52,9 @@ func New(ctx context.Context, operationName string) (span opentracing.Span, ctxN
 	if parent != nil {
 		opts = []opentracing.StartSpanOption{opentracing.ChildOf(parent.Context())}
 	}
+	if tracer == nil {
+		tracer = opentracing.GlobalTracer()
+	}
 	span, ctxNew = opentracing.StartSpanFromContextWithTracer(ctx, tracer, operationName, opts...)
 	ctxNew = context.WithValue(ctx, BackupActiveSpanKey, span)
 	return
