@@ -12,7 +12,7 @@ import (
 
 const (
 	dbTypeRedis = "redis"
-	maxStmtLen  = 100
+	maxStmtLen  = 500
 )
 
 func New(options *redis.Options) (cli *redis.Client) {
