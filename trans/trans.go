@@ -20,3 +20,12 @@ func BoolToString(b bool) string {
 	}
 	return "OFF"
 }
+
+func StringInSlice(s string, ss []string) bool {
+	for _, s1 := range ss {
+		if s1 == s {
+			return true
+		}
+	}
+	return false
+}

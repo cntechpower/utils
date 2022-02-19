@@ -3,6 +3,8 @@ package redis
 import (
 	"context"
 
+	"github.com/cntechpower/utils/trans"
+
 	"github.com/opentracing/opentracing-go/ext"
 
 	"github.com/cntechpower/utils/tracing"
@@ -15,6 +17,10 @@ const (
 	maxStmtLen  = 500
 )
 
+var skipCmd = []string{
+	"ping",
+}
+
 func New(options *redis.Options) (cli *redis.Client) {
 	cli = redis.NewClient(options)
 	cli.AddHook(&hook{})
@@ -25,6 +31,9 @@ type hook struct {
 }
 
 func (h *hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Context, error) {
+	if trans.StringInSlice(cmd.Name(), skipCmd) {
+		return ctx, nil
+	}
 	span, ctx := tracing.New(ctx, "redis."+cmd.Name())
 	ext.DBType.Set(span, dbTypeRedis)
 	stmt := cmd.String()
@@ -36,6 +45,9 @@ func (h *hook) BeforeProcess(ctx context.Context, cmd redis.Cmder) (context.Cont
 }
 
 func (h *hook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
+	if trans.StringInSlice(cmd.Name(), skipCmd) {
+		return nil
+	}
 	span := tracing.SpanFromContext(ctx)
 	if span != nil {
 		span.Finish()
