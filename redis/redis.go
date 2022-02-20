@@ -50,6 +50,10 @@ func (h *hook) AfterProcess(ctx context.Context, cmd redis.Cmder) error {
 	}
 	span := tracing.SpanFromContext(ctx)
 	if span != nil {
+		if cmd.Err() != nil {
+			ext.LogError(span, cmd.Err())
+			ext.Error.Set(span, true)
+		}
 		span.Finish()
 	}
 	return nil

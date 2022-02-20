@@ -34,6 +34,7 @@ func (d *DB) Query(ctx context.Context, query string, args ...interface{}) (rows
 	ext.DBType.Set(span, dbTypeMySQL)
 	rows, err = d.DB.Query(query, args...)
 	if err != nil {
+		ext.LogError(span, err)
 		ext.Error.Set(span, true)
 	}
 	span.Finish()
@@ -46,6 +47,7 @@ func (d *DB) Exec(ctx context.Context, query string, args ...interface{}) (res s
 	ext.DBType.Set(span, dbTypeMySQL)
 	res, err = d.DB.Exec(query, args...)
 	if err != nil {
+		ext.LogError(span, err)
 		ext.Error.Set(span, true)
 	}
 	span.Finish()
