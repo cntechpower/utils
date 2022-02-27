@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/Shopify/sarama v1.19.0
+	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/elastic/go-elasticsearch/v8 v8.0.0-20210316171538-077c047e009c
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-redis/redis/v8 v8.11.4
