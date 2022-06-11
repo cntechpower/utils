@@ -172,3 +172,44 @@ func Warnf(h *Header, format string, a ...interface{}) {
 func Fatalf(h *Header, format string, a ...interface{}) {
 	logOutput(context.Background(), h.skipCallers, h, levelError, format, a...)
 }
+
+type headerKey struct {
+}
+
+func Inject(ctx context.Context, name string) {
+	ctx = context.WithValue(ctx, headerKey{}, NewHeader(name))
+}
+
+func Extract(ctx context.Context) (h *Header) {
+	h = ctx.Value(headerKey{}).(*Header)
+	return
+}
+
+func TryExtract(ctx context.Context) (h *Header) {
+	h = ctx.Value(headerKey{}).(*Header)
+	if h == nil {
+		h = NewHeader("default-header")
+	}
+	return
+}
+
+func FatalC(ctx context.Context, format string, a ...interface{}) {
+	h := TryExtract(ctx)
+	logOutput(context.Background(), h.skipCallers, h, levelFatal, format, a...)
+	panic(fmt.Sprintf(format, a...))
+}
+
+func InfoC(ctx context.Context, format string, a ...interface{}) {
+	h := TryExtract(ctx)
+	logOutput(ctx, h.skipCallers, h, levelInfo, format, a...)
+}
+
+func ErrorC(ctx context.Context, format string, a ...interface{}) {
+	h := TryExtract(ctx)
+	logOutput(ctx, h.skipCallers, h, levelError, format, a...)
+}
+
+func WarnC(ctx context.Context, format string, a ...interface{}) {
+	h := TryExtract(ctx)
+	logOutput(ctx, h.skipCallers, h, levelWarn, format, a...)
+}
