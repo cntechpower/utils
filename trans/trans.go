@@ -29,3 +29,11 @@ func StringInSlice(s string, ss []string) bool {
 	}
 	return false
 }
+
+func Nvl[T any](s *T) T {
+	if s == nil {
+		var a T
+		return a
+	}
+	return *s
+}
