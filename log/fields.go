@@ -186,8 +186,8 @@ func Extract(ctx context.Context) (h *Header) {
 }
 
 func TryExtract(ctx context.Context) (h *Header) {
-	h = ctx.Value(headerKey{}).(*Header)
-	if h == nil {
+	h, ok := ctx.Value(headerKey{}).(*Header)
+	if !ok {
 		h = NewHeader("default-header")
 	}
 	return
